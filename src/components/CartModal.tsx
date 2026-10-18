@@ -64,9 +64,10 @@ export const CartModal: React.FC<CartModalProps> = ({
 
   const totalAmount = cartItems.reduce((sum, item) => sum + item.product.price * item.qty, 0);
 
-  const activeAccount = paymentAccounts[selectedPay] || {
-    name: 'Lin Htet',
-    number: '09-777123456'
+  const rawAccount = paymentAccounts[selectedPay];
+  const activeAccount = (rawAccount && rawAccount.number && rawAccount.number !== '09-777123456') ? rawAccount : {
+    name: 'Lin Htet (လင်းထက်)',
+    number: '09970340032'
   };
 
   const handleCopyAccount = () => {

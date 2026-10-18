@@ -11,6 +11,7 @@ import { PriceAlertModal } from './components/PriceAlertModal';
 import { ProductDetailModal } from './components/ProductDetailModal';
 import { TestimonialSlider } from './components/TestimonialSlider';
 import { FAQ } from './components/FAQ';
+import { ContactChannels } from './components/ContactChannels';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsModal } from './components/SettingsModal';
 import { ToastContainer, ToastNotification } from './components/Toast';
@@ -454,9 +455,12 @@ export default function App() {
               setIsTrackOpen(true);
             }}
             onOpenHistory={() => handleOpenHistory()}
-            supportTelegram="https://t.me/linhtetit"
-            supportPhone={config.paymentAccounts?.KPay?.number || '09-777123456'}
+            supportTelegram="https://t.me/+959675663660"
+            supportPhone={config.paymentAccounts?.KPay?.number || '09970340032'}
           />
+
+          {/* Dedicated Imo, Telegram, Viber, WhatsApp Contact Channels */}
+          <ContactChannels />
         </main>
       )}
 
@@ -476,14 +480,50 @@ export default function App() {
           </div>
 
           <div className="flex flex-col items-center md:items-end gap-2 text-xs text-[#d9c4b3]">
-            <div className="flex items-center gap-3">
-              <span className="bg-[#53321d] px-2.5 py-1 rounded text-[11px] font-semibold text-white">
-                KBZPay: {config.paymentAccounts?.KPay?.number || '09-777123456'}
+            {/* Payment Numbers */}
+            <div className="flex items-center gap-2 flex-wrap justify-center md:justify-end">
+              <span className="bg-[#53321d] px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white">
+                KBZPay: <b className="text-amber-300 font-mono">{config.paymentAccounts?.KPay?.number || '09970340032'}</b>
               </span>
-              <span className="bg-[#53321d] px-2.5 py-1 rounded text-[11px] font-semibold text-white">
-                WavePay: {config.paymentAccounts?.WavePay?.number || '09-777123456'}
+              <span className="bg-[#53321d] px-2.5 py-1 rounded-lg text-[11px] font-semibold text-white">
+                WavePay: <b className="text-amber-300 font-mono">{config.paymentAccounts?.WavePay?.number || '09970340032'}</b>
               </span>
             </div>
+
+            {/* Official Contact Channels Bar */}
+            <div className="flex items-center gap-2 flex-wrap justify-center md:justify-end text-[11px] pt-1">
+              <a
+                href="https://t.me/+959675663660"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#2AABEE]/20 hover:bg-[#2AABEE]/30 text-sky-200 border border-sky-400/30 px-2 py-0.5 rounded-md font-semibold transition-colors flex items-center gap-1"
+              >
+                <span>Telegram: 09675663660</span>
+              </a>
+              <a
+                href="viber://chat?number=%2B959970340032"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#7360f2]/20 hover:bg-[#7360f2]/30 text-purple-200 border border-purple-400/30 px-2 py-0.5 rounded-md font-semibold transition-colors flex items-center gap-1"
+              >
+                <span>Viber: 09970340032</span>
+              </a>
+              <a
+                href="https://wa.me/959970340032"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#25D366]/20 hover:bg-[#25D366]/30 text-emerald-200 border border-emerald-400/30 px-2 py-0.5 rounded-md font-semibold transition-colors flex items-center gap-1"
+              >
+                <span>WhatsApp: 09970340032</span>
+              </a>
+              <a
+                href="tel:09970340032"
+                className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-200 border border-blue-400/30 px-2 py-0.5 rounded-md font-semibold transition-colors flex items-center gap-1"
+              >
+                <span>Imo / Call: 09970340032</span>
+              </a>
+            </div>
+
             <p className="text-[11px] text-[#c7b29e] mt-1">
               © {new Date().getFullYear()} Lin Htet IT Service. All rights reserved.
             </p>

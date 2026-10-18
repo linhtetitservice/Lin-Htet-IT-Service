@@ -94,11 +94,11 @@ export const INITIAL_PRODUCTS: Product[] = [
 export const DEFAULT_PAYMENT_ACCOUNTS: PaymentAccounts = {
   KPay: {
     name: 'Lin Htet (လင်းထက်)',
-    number: '09-777123456'
+    number: '09970340032'
   },
   WavePay: {
     name: 'Lin Htet (လင်းထက်)',
-    number: '09-777123456'
+    number: '09970340032'
   },
   KBZ_Bank: {
     name: 'U Lin Htet',
@@ -106,8 +106,19 @@ export const DEFAULT_PAYMENT_ACCOUNTS: PaymentAccounts = {
   },
   AYAPay: {
     name: 'Lin Htet IT Service',
-    number: '09-777123456'
+    number: '09970340032'
   }
+};
+
+export const OFFICIAL_CONTACTS = {
+  imo: '09970340032',
+  viber: '09970340032',
+  whatsapp: '09970340032',
+  telegram: '09675663660',
+  whatsappLink: 'https://wa.me/959970340032',
+  viberLink: 'viber://chat?number=%2B959970340032',
+  telegramLink: 'https://t.me/+959675663660',
+  callPhone: 'tel:09970340032'
 };
 
 export const INITIAL_REVIEWS: ProductReview[] = [

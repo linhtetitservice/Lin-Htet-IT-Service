@@ -19,7 +19,7 @@ export const auth = getAuth(app);
 
 // Primary Bootstrapped Admin Email and Default Master Passcode
 export const BOOTSTRAPPED_ADMIN_EMAIL = 'linhtetitservice0@gmail.com';
-export const DEFAULT_ADMIN_PASSCODE = 'linhtet2026';
+export const DEFAULT_ADMIN_PASSCODE = 'lin320254';
 
 export interface AdminSessionUser {
   email: string;
@@ -97,10 +97,12 @@ export function loginAdminWithPasscode(passcode: string): {
   user?: AdminSessionUser; 
   error?: string 
 } {
-  const savedPasscode = localStorage.getItem('linhtet_admin_passcode') || DEFAULT_ADMIN_PASSCODE;
+  const saved = typeof window !== 'undefined' ? localStorage.getItem('linhtet_admin_passcode') : null;
+  // If previously set to the old placeholder, override with the new master code
+  const effectivePasscode = (saved && saved !== 'linhtet2026') ? saved : DEFAULT_ADMIN_PASSCODE;
   const input = passcode.trim();
   
-  if (input === savedPasscode || input === DEFAULT_ADMIN_PASSCODE || input === '123456') {
+  if (input === effectivePasscode || input === DEFAULT_ADMIN_PASSCODE) {
     const session: AdminSessionUser = {
       email: BOOTSTRAPPED_ADMIN_EMAIL,
       displayName: 'Lin Htet Admin',
@@ -110,6 +112,7 @@ export function loginAdminWithPasscode(passcode: string): {
     try {
       sessionStorage.setItem('linhtet_admin_session', JSON.stringify(session));
       localStorage.setItem('linhtet_admin_session_backup', JSON.stringify(session));
+      localStorage.setItem('linhtet_admin_passcode', DEFAULT_ADMIN_PASSCODE);
       window.dispatchEvent(new CustomEvent('linhtet_admin_auth_updated'));
     } catch {
       // ignore

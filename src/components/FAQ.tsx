@@ -119,8 +119,8 @@ const FAQ_DATA: FAQItem[] = [
 export const FAQ: React.FC<FAQProps> = ({
   onOpenTrack,
   onOpenHistory,
-  supportTelegram = 'https://t.me/linhtetit',
-  supportPhone = '09-777123456'
+  supportTelegram = 'https://t.me/+959675663660',
+  supportPhone = '09970340032'
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'delivery' | 'payment' | 'usage'>('all');
   const [searchQuery, setSearchQuery] = useState('');

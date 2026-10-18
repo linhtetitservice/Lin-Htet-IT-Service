@@ -42,13 +42,24 @@ export class StoreService {
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
+        const payments = parsed.paymentAccounts || { ...DEFAULT_PAYMENT_ACCOUNTS };
+        // Auto-migrate any stale placeholder phone numbers from previous versions
+        if (payments.KPay && (payments.KPay.number === '09-777123456' || !payments.KPay.number)) {
+          payments.KPay.number = '09970340032';
+        }
+        if (payments.WavePay && (payments.WavePay.number === '09-777123456' || !payments.WavePay.number)) {
+          payments.WavePay.number = '09970340032';
+        }
+        if (payments.AYAPay && (payments.AYAPay.number === '09-777123456' || !payments.AYAPay.number)) {
+          payments.AYAPay.number = '09970340032';
+        }
         return {
           supabaseUrl: parsed.supabaseUrl || localStorage.getItem('LH_SUPABASE_URL') || defaultUrl,
           supabaseAnonKey: parsed.supabaseAnonKey || localStorage.getItem('LH_SUPABASE_KEY') || defaultKey,
           supabaseServiceKey: parsed.supabaseServiceKey || defaultKey,
           telegramBotToken: parsed.telegramBotToken || defaultBot,
           telegramChatId: parsed.telegramChatId || '',
-          paymentAccounts: parsed.paymentAccounts || DEFAULT_PAYMENT_ACCOUNTS
+          paymentAccounts: payments
         };
       } catch (e) {
         console.error('Failed to parse config:', e);
@@ -60,7 +71,7 @@ export class StoreService {
       supabaseServiceKey: defaultKey,
       telegramBotToken: defaultBot,
       telegramChatId: '',
-      paymentAccounts: DEFAULT_PAYMENT_ACCOUNTS
+      paymentAccounts: { ...DEFAULT_PAYMENT_ACCOUNTS }
     };
   }
 

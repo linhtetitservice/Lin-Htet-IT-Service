@@ -5,8 +5,7 @@ import {
   loginAdminWithPasscode,
   logoutAdmin, 
   onAdminAuthChange, 
-  BOOTSTRAPPED_ADMIN_EMAIL,
-  DEFAULT_ADMIN_PASSCODE
+  BOOTSTRAPPED_ADMIN_EMAIL
 } from '../services/firebase';
 import { 
   Shield, 
@@ -276,16 +275,17 @@ export const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({
             <div className="relative">
               <input
                 type={showPasscodeText ? 'text' : 'password'}
-                placeholder="Admin Passcode ရိုက်ထည့်ပါ..."
+                placeholder="လျှို့ဝှက် Admin Passcode ရိုက်ထည့်ပါ..."
                 value={passcode}
                 onChange={e => setPasscode(e.target.value)}
-                className="w-full text-xs pl-3 pr-10 py-2.5 rounded-xl border border-[#d9c4b3] bg-white outline-none focus:border-[#6b4226] font-mono"
+                className="w-full text-xs pl-3 pr-10 py-2.5 rounded-xl border border-[#d9c4b3] bg-white outline-none focus:border-[#6b4226] font-mono tracking-wider"
                 autoFocus
               />
               <button
                 type="button"
                 onClick={() => setShowPasscodeText(prev => !prev)}
                 className="absolute right-3 top-2.5 text-stone-400 hover:text-stone-700 p-0.5"
+                title={showPasscodeText ? "Passcode ဖျောက်မည်" : "Passcode ပြမည်"}
               >
                 {showPasscodeText ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -295,15 +295,8 @@ export const AdminAuthGuard: React.FC<AdminAuthGuardProps> = ({
               <p className="text-red-600 text-xs font-semibold">{passcodeError}</p>
             )}
 
-            <div className="flex items-center justify-between text-[11px] text-stone-500">
-              <span>မူလ Passcode: <code className="font-bold text-[#6b4226] bg-[#f7f0e8] px-1.5 py-0.5 rounded">{DEFAULT_ADMIN_PASSCODE}</code></span>
-              <button
-                type="button"
-                onClick={() => setPasscode(DEFAULT_ADMIN_PASSCODE)}
-                className="text-[#6b4226] hover:underline font-bold text-[10px]"
-              >
-                Auto-fill
-              </button>
+            <div className="text-[11px] text-stone-500">
+              * သတ်မှတ်ထားသော လျှို့ဝှက် Admin Master Passcode ကို ရိုက်ထည့်ပါ
             </div>
 
             <button
