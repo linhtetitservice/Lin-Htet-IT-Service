@@ -1,0 +1,103 @@
+import { Product, PaymentAccounts } from '../types';
+
+export const INITIAL_PRODUCTS: Product[] = [
+  {
+    id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    name: 'NordVPN Premium (1 Year Private)',
+    description: 'မြန်နှုန်းမြင့် လုံခြုံစိတ်ချရသော NordVPN အကောင့်သီးသန့် (PC, Android, iOS အသုံးပြုနိုင်)',
+    price: 18000,
+    category: 'VPN & Proxy',
+    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80',
+    active: true,
+    download_link: 'https://mega.nz/file/nordvpn-account-guide-linhtet\nUser: linhtet.nord@gmail.com\nPass: SecPass#2026'
+  },
+  {
+    id: 'b1ffcd88-8d1a-4fe9-aa5c-5aa8ac270b22',
+    name: 'Canva Pro Lifetime (Own Gmail)',
+    description: 'မိမိကိုယ်ပိုင် Gmail ဖြင့် Canva Pro Brand Kit, Templates, Magic Studio အကုန်သုံးနိုင်သည်',
+    price: 12000,
+    category: 'Graphic & Design',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
+    active: true,
+    download_link: 'https://canva.com/brand/join?invite_token=CANVA-PRO-LINHTET-TEAM-ACCESS'
+  },
+  {
+    id: 'c2eedc77-7c2b-4ed8-bb4b-4bb7ab160c33',
+    name: 'Windows 11 Pro Genuine Retail Key',
+    description: 'Microsoft Official Online Activation Key (Re-install ပြန်လုပ်၍ရသော Lifetime Key)',
+    price: 15000,
+    category: 'OS & Software',
+    image: 'https://images.unsplash.com/photo-1629654297299-c8506221ca97?auto=format&fit=crop&w=600&q=80',
+    active: true,
+    download_link: 'VK7JG-NPHTM-C97JM-9MPGT-3V66T (Lin Htet Retail License)'
+  },
+  {
+    id: 'd3ddcb66-6b3c-4dc7-cc3a-3aa6ba050d44',
+    name: 'Telegram Premium 3 Months Gift',
+    description: 'ကြယ်ပွင့် Badge, 4GB Upload, Fast Download, Voice-to-Text ပါဝင်သော ၃ လစာ လက်ဆောင်',
+    price: 32000,
+    category: 'Social & Tools',
+    image: 'https://images.unsplash.com/photo-1614680376593-902f749f7ffc?auto=format&fit=crop&w=600&q=80',
+    active: true,
+    download_link: 'https://t.me/giftcode?link=tgprem-linhtet-gift-3mo-valid'
+  },
+  {
+    id: 'e4ccba55-5a4d-4cb6-dd29-2995a9f40e55',
+    name: 'ChatGPT Plus Shared Account (1 Month)',
+    description: 'GPT-4o, DALL-E 3, Canvas, Code Interpreter အသုံးပြုနိုင်သော လစဉ်အကောင့်',
+    price: 22000,
+    category: 'AI Tools',
+    image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=600&q=80',
+    active: true,
+    download_link: 'Login Portal: https://ai-portal.linhtet.com\nUser: linhtet_gpt_user04\nPin: 8892'
+  },
+  {
+    id: 'f5bba944-495e-4ba5-ee18-188498e30f66',
+    name: 'CapCut Pro 1 Year (PC & Mobile)',
+    description: 'Watermark မပါ၊ Pro Effects, Auto Captions, 4K 60fps Export အပြည့်အစုံသုံးနိုင်သည်',
+    price: 25000,
+    category: 'Video Editing',
+    image: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80',
+    active: true,
+    download_link: 'https://drive.google.com/drive/folders/capcut-pro-linhtet-vip-installer'
+  },
+  {
+    id: '06aa9833-386f-4a94-ff07-077387d20a77',
+    name: 'YouTube Premium 6 Months (Family Slot)',
+    description: 'ကြော်ငြာလုံးဝမပါ၊ Background Play, YouTube Music ပါဝင်သော ၆ လစာ အသုံးပြုခွင့်',
+    price: 16000,
+    category: 'Streaming & Music',
+    image: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=600&q=80',
+    active: true,
+    download_link: 'https://families.google.com/join/linhtet-yt-premium-invite-batch6'
+  },
+  {
+    id: '17998722-277e-4983-ee96-966276c10b88',
+    name: 'Spotify Premium 6 Months Invite',
+    description: 'High Quality Audio, Offline Download, ကြော်ငြာမပါသော Spotify Family slot',
+    price: 15000,
+    category: 'Streaming & Music',
+    image: 'https://images.unsplash.com/photo-1611339555312-e607c8352fd7?auto=format&fit=crop&w=600&q=80',
+    active: true,
+    download_link: 'https://www.spotify.com/family/join/invite/linhtet-spotify-slot9'
+  }
+];
+
+export const DEFAULT_PAYMENT_ACCOUNTS: PaymentAccounts = {
+  KPay: {
+    name: 'Lin Htet (လင်းထက်)',
+    number: '09-777123456'
+  },
+  WavePay: {
+    name: 'Lin Htet (လင်းထက်)',
+    number: '09-777123456'
+  },
+  KBZ_Bank: {
+    name: 'U Lin Htet',
+    number: '0483019990123456'
+  },
+  AYAPay: {
+    name: 'Lin Htet IT Service',
+    number: '09-777123456'
+  }
+};

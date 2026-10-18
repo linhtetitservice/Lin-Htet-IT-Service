@@ -1,0 +1,413 @@
+import React, { useState, useEffect } from 'react';
+import { Product, Order, OrderStatus, AppConfig } from './types';
+import { storeService } from './services/storeService';
+import { Header } from './components/Header';
+import { Hero } from './components/Hero';
+import { ProductCard } from './components/ProductCard';
+import { CartModal } from './components/CartModal';
+import { TrackOrderModal } from './components/TrackOrderModal';
+import { AdminDashboard } from './components/AdminDashboard';
+import { SettingsModal } from './components/SettingsModal';
+import { Search, ShoppingBag, Filter, ShieldCheck, Phone, Send, Info } from 'lucide-react';
+
+export default function App() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [cart, setCart] = useState<Record<string, number>>({});
+  const [selectedCategory, setSelectedCategory] = useState<string>('အားလုံး');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isAdminView, setIsAdminView] = useState<boolean>(false);
+
+  // Modals
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isTrackOpen, setIsTrackOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [trackInitialNo, setTrackInitialNo] = useState('');
+  const [trackInitialContact, setTrackInitialContact] = useState('');
+
+  // Config & Status
+  const [config, setConfig] = useState<AppConfig>(storeService.getConfig());
+  const [isSupabaseLive, setIsSupabaseLive] = useState(storeService.isSupabaseConnected());
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+
+  // Fetch initial data
+  const loadData = async () => {
+    const fetchedProducts = await storeService.getProducts();
+    const fetchedOrders = await storeService.getOrders();
+    setProducts(fetchedProducts);
+    setOrders(fetchedOrders);
+    setConfig(storeService.getConfig());
+    setIsSupabaseLive(storeService.isSupabaseConnected());
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Cart operations
+  const cartItemCount = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+
+  const handleAddToCart = (product: Product) => {
+    setCart(prev => ({
+      ...prev,
+      [product.id]: (prev[product.id] || 0) + 1,
+    }));
+    setLastAddedId(product.id);
+    setTimeout(() => setLastAddedId(null), 1500);
+  };
+
+  const handleBuyNow = (product: Product) => {
+    setCart(prev => ({
+      ...prev,
+      [product.id]: (prev[product.id] || 0) + 1,
+    }));
+    setIsCartOpen(true);
+  };
+
+  const handleUpdateQty = (productId: string, delta: number) => {
+    setCart(prev => {
+      const current = prev[productId] || 0;
+      const next = current + delta;
+      if (next <= 0) {
+        const { [productId]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [productId]: next };
+    });
+  };
+
+  const handleRemoveFromCart = (productId: string) => {
+    setCart(prev => {
+      const { [productId]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const handleClearCart = () => {
+    setCart({});
+  };
+
+  // Order Submission
+  const handleSubmitOrder = async (orderData: {
+    customerName: string;
+    contact: string;
+    note: string;
+    payMethod: string;
+    slipDataUrl: string;
+    items: { id: string; name: string; price: number; qty: number }[];
+  }) => {
+    const res = await storeService.submitOrder(orderData);
+    if (res.ok) {
+      await loadData();
+    }
+    return res;
+  };
+
+  // Order Tracking
+  const handleTrackOrder = async (no: string, contact: string) => {
+    return await storeService.trackOrder(no, contact);
+  };
+
+  // Admin Actions
+  const handleUpdateOrderStatus = async (orderId: string, status: OrderStatus) => {
+    await storeService.updateOrderStatus(orderId, status);
+    await loadData();
+  };
+
+  const handleDeleteOrder = async (orderId: string) => {
+    await storeService.deleteOrder(orderId);
+    await loadData();
+  };
+
+  const handleAddProduct = async (
+    productData: Omit<Product, 'id' | 'created_at'>,
+    downloadLink?: string
+  ) => {
+    await storeService.createProduct(productData, downloadLink);
+    await loadData();
+  };
+
+  const handleUpdateProduct = async (
+    productId: string,
+    updates: Partial<Product>,
+    downloadLink?: string
+  ) => {
+    await storeService.updateProduct(productId, updates, downloadLink);
+    await loadData();
+  };
+
+  const handleDeleteProduct = async (productId: string) => {
+    await storeService.deleteProduct(productId);
+    await loadData();
+  };
+
+  const handleSaveConfig = (newConfig: Partial<AppConfig>) => {
+    storeService.saveConfig(newConfig);
+    setConfig(storeService.getConfig());
+    setIsSupabaseLive(storeService.isSupabaseConnected());
+  };
+
+  const handleResetData = () => {
+    storeService.resetToDefaultData();
+    loadData();
+    setCart({});
+  };
+
+  // Categories list
+  const activeProducts = products.filter(p => p.active);
+  const categories = ['အားလုံး', ...Array.from(new Set(activeProducts.map(p => p.category).filter(Boolean)))];
+
+  const filteredProducts = activeProducts.filter(p => {
+    const matchesCategory = selectedCategory === 'အားလုံး' || p.category === selectedCategory;
+    const matchesSearch =
+      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#fcfaf7] text-[#2b1d12]">
+      {/* Top Navigation Bar */}
+      <Header
+        cartCount={cartItemCount}
+        onOpenCart={() => setIsCartOpen(true)}
+        onOpenTrack={() => {
+          setTrackInitialNo('');
+          setTrackInitialContact('');
+          setIsTrackOpen(true);
+        }}
+        onOpenAdmin={() => setIsAdminView(true)}
+        isAdminView={isAdminView}
+        onToggleAdminView={() => setIsAdminView(prev => !prev)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        isSupabaseLive={isSupabaseLive}
+      />
+
+      {/* Main Body */}
+      {isAdminView ? (
+        /* ADMIN DASHBOARD VIEW */
+        <main className="flex-1">
+          <AdminDashboard
+            products={products}
+            orders={orders}
+            onUpdateOrderStatus={handleUpdateOrderStatus}
+            onDeleteOrder={handleDeleteOrder}
+            onAddProduct={handleAddProduct}
+            onUpdateProduct={handleUpdateProduct}
+            onDeleteProduct={handleDeleteProduct}
+            onRefreshData={loadData}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            isSupabaseLive={isSupabaseLive}
+          />
+        </main>
+      ) : (
+        /* CUSTOMER STOREFRONT VIEW */
+        <main className="flex-1">
+          <Hero />
+
+          {/* Search & Category Filter Section */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between pb-6 border-b border-[#ebdccd]">
+              {/* Category Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all ${
+                      selectedCategory === cat
+                        ? 'bg-[#6b4226] text-white shadow-xs'
+                        : 'bg-white text-[#5c4738] border border-[#e6d8c8] hover:bg-[#f7f0e8]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative min-w-[260px] sm:min-w-[320px]">
+                <Search className="w-4 h-4 absolute left-3.5 top-3 text-[#8d7159]" />
+                <input
+                  type="text"
+                  placeholder="ရှာရန်... (VPN, Canva, Windows, etc.)"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full text-xs sm:text-sm pl-9 pr-4 py-2 rounded-xl border border-[#d9c4b3] bg-white placeholder-[#9c8471] focus:border-[#6b4226] focus:ring-1 focus:ring-[#6b4226] outline-none shadow-2xs"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-2.5 text-xs text-stone-400 hover:text-stone-700"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Results Count & Current Filter Info */}
+            <div className="mt-4 flex items-center justify-between text-xs text-[#735c49]">
+              <span>
+                ရလဒ် <b>{filteredProducts.length}</b> ခု ပြသထားပါသည်
+                {selectedCategory !== 'အားလုံး' && ` (${selectedCategory})`}
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>Stock အသင့်ရှိသော Digital Items များ</span>
+              </div>
+            </div>
+
+            {/* Products Grid */}
+            {filteredProducts.length === 0 ? (
+              <div className="py-16 text-center bg-white rounded-2xl border border-[#e6d8c8] mt-6">
+                <ShoppingBag className="w-12 h-12 text-[#d9c4b3] mx-auto mb-3" />
+                <h3 className="font-bold text-stone-700 text-base">ရှာဖွေမှုနှင့် ကိုက်ညီသော Product မရှိပါ</h3>
+                <p className="text-xs text-stone-500 mt-1">
+                  အခြား စာလုံး သို့မဟုတ် Category အားလုံးကို ရွေးချယ်ကြည့်ပါ
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedCategory('အားလုံး');
+                    setSearchQuery('');
+                  }}
+                  className="mt-4 px-4 py-2 rounded-xl text-xs font-bold bg-[#6b4226] text-white hover:bg-[#53321d]"
+                >
+                  မူလအတိုင်း ပြန်ကြည့်မည်
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-6">
+                {filteredProducts.map(product => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                    onBuyNow={handleBuyNow}
+                    isAdded={lastAddedId === product.id}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* How to Order / Guide Section */}
+          <section className="bg-[#f7f0e8] border-t border-[#ebdccd] py-12 px-4 sm:px-6 lg:px-8 mt-12">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-8">
+                <h3 className="text-lg sm:text-xl font-extrabold text-[#6b4226]">
+                  ဝယ်ယူပုံ အဆင့်ဆင့်
+                </h3>
+                <p className="text-xs sm:text-sm text-[#735c49] mt-1">
+                  မိနစ်ပိုင်းအတွင်း အလွယ်တကူ ဝယ်ယူပြီး ဒေါင်းလုဒ်ရယူနိုင်ပါသည်
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-5 rounded-2xl border border-[#e6d8c8] shadow-xs text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-[#f7f0e8] text-[#6b4226] font-extrabold flex items-center justify-center mx-auto text-base">
+                    ၁
+                  </div>
+                  <h4 className="font-bold text-sm text-[#2b1d12]">ပစ္စည်းရွေးချယ်ပါ</h4>
+                  <p className="text-xs text-[#5c4738] leading-relaxed">
+                    လိုချင်သော Digital Product ကို ခြင်းတောင်းထဲထည့်ပြီး ဝယ်ယူသူ အချက်အလက်ဖြည့်ပါ။
+                  </p>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-[#e6d8c8] shadow-xs text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-[#f7f0e8] text-[#6b4226] font-extrabold flex items-center justify-center mx-auto text-base">
+                    ၂
+                  </div>
+                  <h4 className="font-bold text-sm text-[#2b1d12]">KPay / WavePay ငွေလွှဲပါ</h4>
+                  <p className="text-xs text-[#5c4738] leading-relaxed">
+                    ဖော်ပြထားသော နံပါတ်သို့ ငွေလွှဲပြီး Screenshot (Slip) ပုံကို ပူးတွဲတင်ပေးပါ။
+                  </p>
+                </div>
+
+                <div className="bg-white p-5 rounded-2xl border border-[#e6d8c8] shadow-xs text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-[#f7f0e8] text-[#6b4226] font-extrabold flex items-center justify-center mx-auto text-base">
+                    ၃
+                  </div>
+                  <h4 className="font-bold text-sm text-[#2b1d12]">Download Link ရယူပါ</h4>
+                  <p className="text-xs text-[#5c4738] leading-relaxed">
+                    ငွေစစ်ပြီးသည်နှင့် "အော်ဒါစစ်ရန်" မှတစ်ဆင့် Download Link / Credentials ကို ချက်ချင်း ရယူပါ။
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      )}
+
+      {/* Footer */}
+      <footer className="bg-[#6b4226] text-[#f7f0e8] border-t border-[#53321d] py-10 px-4 sm:px-6 lg:px-8 mt-auto">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left">
+          <div>
+            <h4 className="text-lg font-bold text-white flex items-center justify-center md:justify-start gap-2">
+              <span className="w-7 h-7 rounded-lg bg-[#f7f0e8] text-[#6b4226] flex items-center justify-center text-xs font-black">
+                LH
+              </span>
+              Lin Htet IT Service
+            </h4>
+            <p className="text-xs text-[#d9c4b3] mt-1 max-w-md">
+              လူကြီးမင်းတို့၏ Digital လိုအပ်ချက်များအတွက် စိတ်ချရသော Software၊ VPN၊ Canva Pro နှင့် Premium အကောင့်များ
+            </p>
+          </div>
+
+          <div className="flex flex-col items-center md:items-end gap-2 text-xs text-[#d9c4b3]">
+            <div className="flex items-center gap-3">
+              <span className="bg-[#53321d] px-2.5 py-1 rounded text-[11px] font-semibold text-white">
+                KBZPay: {config.paymentAccounts?.KPay?.number || '09-777123456'}
+              </span>
+              <span className="bg-[#53321d] px-2.5 py-1 rounded text-[11px] font-semibold text-white">
+                WavePay: {config.paymentAccounts?.WavePay?.number || '09-777123456'}
+              </span>
+            </div>
+            <p className="text-[11px] text-[#c7b29e] mt-1">
+              © {new Date().getFullYear()} Lin Htet IT Service. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+
+      {/* MODALS */}
+      {/* 1. Cart & Checkout Modal */}
+      <CartModal
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        cart={cart}
+        products={products}
+        paymentAccounts={config.paymentAccounts}
+        onUpdateQty={handleUpdateQty}
+        onRemoveItem={handleRemoveFromCart}
+        onClearCart={handleClearCart}
+        onSubmitOrder={handleSubmitOrder}
+        onOpenTrackWithNo={(no, contact) => {
+          setTrackInitialNo(no);
+          setTrackInitialContact(contact);
+          setIsTrackOpen(true);
+        }}
+      />
+
+      {/* 2. Order Tracking Modal */}
+      <TrackOrderModal
+        isOpen={isTrackOpen}
+        onClose={() => setIsTrackOpen(false)}
+        initialOrderNo={trackInitialNo}
+        initialContact={trackInitialContact}
+        onTrack={handleTrackOrder}
+      />
+
+      {/* 3. Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        config={config}
+        onSaveConfig={handleSaveConfig}
+        onResetData={handleResetData}
+        isSupabaseLive={isSupabaseLive}
+      />
+    </div>
+  );
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Lin Htet IT Service - Digital Product Store",
+  "description": "Digital Product ရောင်းချသော ဝဘ်ဆိုက် (KPay/WavePay ဖြင့် ငွေလွှဲ၊ Telegram Bot အော်ဒါအကြောင်းကြားမှု၊ Admin စီမံခန့်ခွဲမှုနှင့် Download Link စနစ်)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

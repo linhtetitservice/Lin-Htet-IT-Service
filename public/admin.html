@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin - Lin Htet IT Service</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+  <style>
+    :root {
+      --br: #6b4226;
+      --br-dark: #4d2e18;
+      --cream: #f7f0e8;
+      --cream-light: #fcfaf7;
+      --border: #e6d8c8;
+      --tx: #2b1d12;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, 'Noto Sans Myanmar', sans-serif;
+      background: var(--cream);
+      color: var(--tx);
+      line-height: 1.5;
+    }
+    header {
+      background: var(--br);
+      color: #fff;
+      padding: 14px 5%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(107, 66, 38, 0.2);
+    }
+    header h2 { margin: 0; font-size: 1.25rem; }
+    main { padding: 20px 5%; max-width: 1040px; margin: auto; }
+    button {
+      cursor: pointer;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 16px;
+      background: var(--br);
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background 0.15s ease;
+    }
+    button:hover { background: var(--br-dark); }
+    input, select, textarea {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 100%;
+      margin: 6px 0;
+      font-family: inherit;
+      background: #fff;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin: 12px 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+    .tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .tabs button { background: #fff; color: var(--br); border: 1px solid var(--border); }
+    .tabs button.on { background: var(--br); color: #fff; border-color: var(--br); }
+    .f { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media(max-width: 640px) { .f { grid-template-columns: 1fr; } }
+    .new { border-left: 6px solid #e11d48; }
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .badge-new { background: #fee2e2; color: #991b1b; }
+    .badge-paid { background: #dcfce7; color: #166534; }
+    .badge-delivered { background: #dbeafe; color: #1e40af; }
+    .badge-cancelled { background: #f3f4f6; color: #4b5563; }
+    .slip-img { max-height: 80px; border-radius: 6px; cursor: pointer; border: 1px solid #ccc; vertical-align: middle; }
+    .nav-link { color: #fff; text-decoration: none; font-size: 0.9rem; margin-right: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <h2>Lin Htet IT Service — Admin Panel</h2>
+    </div>
+    <div>
+      <a href="/" class="nav-link">← ဆိုင်ရှေ့သို့ (Storefront)</a>
+      <button id="lo" style="display:none;background:#fff;color:var(--br)" onclick="signOut()">Logout</button>
+    </div>
+  </header>
+  <main id="app"></main>
+
+  <script>
+    // Supabase Configuration from local storage or default placeholder
+    const savedUrl = localStorage.getItem('LH_SUPABASE_URL') || 'YOUR_SUPABASE_URL';
+    const savedKey = localStorage.getItem('LH_SUPABASE_KEY') || 'YOUR_SUPABASE_ANON_KEY';
+    
+    let SB = null;
+    if (savedUrl && !savedUrl.includes('YOUR_SUPABASE_URL')) {
+      try {
+        SB = supabase.createClient(savedUrl, savedKey);
+      } catch(e) {
+        console.error('Supabase init error:', e);
+      }
+    }
+
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+    function checkAuth() {
+      if (!SB) {
+        // Offer configuration or demo login
+        showConfigModal();
+        return;
+      }
+      SB.auth.getSession().then(({ data }) => {
+        if (data && data.session) {
+          init();
+        } else {
+          login();
+        }
+      }).catch(err => {
+        console.error(err);
+        login();
+      });
+    }
+
+    checkAuth();
+
+    function showConfigModal() {
+      $('app').innerHTML = `
+        <div class="card" style="max-width: 480px; margin: 40px auto; padding: 24px;">
+          <h3>⚙️ Supabase Configuration</h3>
+          <p style="color:#666; font-size: 0.9rem;">Supabase URL နှင့် Anon Key ကို ထည့်သွင်းပေးပါ။ သို့မဟုတ် Local Demo mode ဖြင့် စမ်းသပ်နိုင်ပါသည်။</p>
+          <label><b>Supabase Project URL:</b></label>
+          <input id="cf_url" placeholder="https://xyzcompany.supabase.co" value="${savedUrl !== 'YOUR_SUPABASE_URL' ? esc(savedUrl) : ''}">
+          <label><b>Supabase Anon Key:</b></label>
+          <input id="cf_key" placeholder="eyJhbGciOi..." value="${savedKey !== 'YOUR_SUPABASE_ANON_KEY' ? esc(savedKey) : ''}">
+          <button onclick="saveConfig()" style="width: 100%; margin-top: 12px;">ဆက်သွယ်မည် (Save & Connect)</button>
+          <div style="margin-top: 14px; text-align: center;">
+            <a href="/" style="color: var(--br); text-decoration: none; font-weight: bold;">← ဆိုင်ရှေ့သို့ ပြန်သွားမည်</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function saveConfig() {
+      const u = $('cf_url').value.trim();
+      const k = $('cf_key').value.trim();
+      if (!u || !k) return alert('ကျေးဇူးပြု၍ URL နှင့် Anon Key အပြည့်အစုံ ဖြည့်ပါ');
+      localStorage.setItem('LH_SUPABASE_URL', u);
+      localStorage.setItem('LH_SUPABASE_KEY', k);
+      try {
+        SB = supabase.createClient(u, k);
+        login();
+      } catch (err) {
+        alert('Supabase client error: ' + err.message);
+      }
+    }
+
+    function login() {
+      $('lo').style.display = 'none';
+      $('app').innerHTML = `
+        <div class="card" style="max-width: 380px; margin: 40px auto; padding: 24px;">
+          <h3 style="margin-top:0">🔐 Admin Login</h3>
+          <p style="color: #666; font-size:0.85rem">Supabase Authentication ဖြင့် ဝင်ရောက်ပါ</p>
+          <input id="e" placeholder="Admin Email (e.g. admin@linhtet.com)">
+          <input id="p" type="password" placeholder="Password">
+          <button onclick="go()" style="width: 100%; margin-top: 8px;">Login</button>
+          <div style="margin-top: 16px; border-top: 1px dashed #ccc; padding-top: 12px;">
+            <button onclick="showConfigModal()" style="width: 100%; background: #fff; color: var(--br); border: 1px solid var(--border);">⚙️ API Keys ပြောင်းမည်</button>
+          </div>
+        </div>
+      `;
+    }
+
+    async function go() {
+      if (!SB) return showConfigModal();
+      const { error } = await SB.auth.signInWithPassword({
+        email: $('e').value.trim(),
+        password: $('p').value
+      });
+      if (error) {
+        alert('Login အမှား: ' + error.message);
+      } else {
+        init();
+      }
+    }
+
+    async function signOut() {
+      if (SB) await SB.auth.signOut();
+      location.reload();
+    }
+
+    let tab = 'orders';
+    function init() {
+      $('lo').style.display = '';
+      $('app').innerHTML = `
+        <div class="tabs">
+          <button id="t1" onclick="show('orders')">📦 အော်ဒါများ (Orders)</button>
+          <button id="t2" onclick="show('products')">🛍️ Products စီမံရန်</button>
+          <button id="t3" onclick="showConfigModal()" style="margin-left: auto;">⚙️ Settings</button>
+        </div>
+        <div id="v"></div>
+      `;
+      if (SB) {
+        SB.channel('o')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'orders' }, () => {
+            if (tab === 'orders') show('orders');
+          })
+          .subscribe();
+      }
+      show('orders');
+    }
+
+    async function show(t) {
+      tab = t;
+      if ($('t1')) $('t1').className = t === 'orders' ? 'on' : '';
+      if ($('t2')) $('t2').className = t === 'products' ? 'on' : '';
+
+      if (t === 'orders') {
+        $('v').innerHTML = '<p>အော်ဒါများကို ရယူနေပါသည်...</p>';
+        const { data, error } = await SB.from('orders').select('*').order('created_at', { ascending: false }).limit(100);
+        if (error) {
+          $('v').innerHTML = `<p style="color:red">အမှား: ${esc(error.message)}</p>`;
+          return;
+        }
+        $('v').innerHTML = (data || []).map(o => `
+          <div class="card ${o.status === 'new' ? 'new' : ''}">
+            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <b>အော်ဒါ #${esc(o.no)}</b>
+              <span class="status-badge badge-${esc(o.status)}">${esc(o.status)}</span>
+            </div>
+            <div style="font-size:0.85rem; color:#666; margin:4px 0;">${new Date(o.created_at).toLocaleString('my-MM')}</div>
+            <p style="margin:4px 0;">👤 <b>${esc(o.customer_name)}</b> · 📞 <a href="tel:${esc(o.contact)}">${esc(o.contact)}</a></p>
+            <div style="background:var(--cream); padding:8px; border-radius:6px; margin:6px 0;">
+              ${(o.items || []).map(i => `• ${esc(i.name)} x${i.qty} = <b>${(i.price * i.qty).toLocaleString()} Ks</b>`).join('<br>')}
+            </div>
+            <p style="margin:4px 0;">
+              💰 စုစုပေါင်း: <b>${(+o.total).toLocaleString()} Ks</b> · 💳 ${esc(o.pay_method)}
+              ${o.slip ? `· <a href="${esc(o.slip)}" target="_blank" rel="noopener">🧾 Slip ကြည့်ရန်</a>` : '· (Slip မပါ)'}
+              ${o.note ? `<br>📝 မှတ်ချက်: <i>${esc(o.note)}</i>` : ''}
+            </p>
+            <div style="margin-top:10px; display:flex; align-items:center; gap:8px;">
+              <label>Status ပြောင်းမည်:</label>
+              <select style="max-width:200px" onchange="st('${o.id}', this.value)">
+                ${['new', 'paid', 'delivered', 'cancelled'].map(s => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${s}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        `).join('') || '<p>လက်ရှိ အော်ဒါမရှိသေးပါ</p>';
+      } else {
+        $('v').innerHTML = '<p>Products များကို ရယူနေပါသည်...</p>';
+        const { data, error } = await SB.from('products').select('*').order('created_at', { ascending: false });
+        if (error) {
+          $('v').innerHTML = `<p style="color:red">အမှား: ${esc(error.message)}</p>`;
+          return;
+        }
+        $('v').innerHTML = `
+          <div class="card" style="border: 2px solid var(--br);">
+            <h3 style="margin-top:0">➕ Product အသစ် ထည့်သွင်းမည်</h3>
+            <div class="f">
+              <input id="pn" placeholder="Product အမည် (e.g. Canva Pro Lifetime)">
+              <input id="pp" type="number" placeholder="ဈေးနှုန်း (Ks)">
+              <input id="pc" placeholder="Category (e.g. Design, VPN, Software)">
+              <input id="pi" placeholder="ပုံ URL (Image Link)">
+            </div>
+            <input id="pf" placeholder="Download link သို့မဟုတ် Account Info (ငွေစစ်ပြီးမှ ဝယ်သူမြင်ရမည်)" style="border-color: #6b4226;">
+            <textarea id="pd" rows="2" placeholder="အသေးစိတ် ဖော်ပြချက်"></textarea>
+            <button onclick="addP()">Product အသစ်သိမ်းမည်</button>
+          </div>
+        ` + (data || []).map(p => `
+          <div class="card" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+            <div>
+              <b>${esc(p.name)}</b> · <span style="color:var(--br);font-weight:bold;">${(+p.price).toLocaleString()} Ks</span>
+              <span style="background:var(--cream); padding:2px 8px; border-radius:4px; font-size:0.8rem; margin-left:6px;">${esc(p.category)}</span>
+              ${p.active ? '' : '<span style="color:red; font-size:0.8rem; margin-left:4px;">(ပိတ်ထားသည်)</span>'}
+              <div style="font-size:0.85rem; color:#666; margin-top:4px;">${esc(p.description || '')}</div>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button onclick="tg('${p.id}', ${!p.active})" style="background:${p.active ? '#7a6652' : '#2e7d32'}">
+                ${p.active ? 'ဖျောက်မည်' : 'ပြန်ပြမည်'}
+              </button>
+              <button onclick="lk('${p.id}')">Link ပြင်</button>
+              <button style="background:#b91c1c" onclick="dl('${p.id}')">ဖျက်မည်</button>
+            </div>
+          </div>
+        `).join('') || '<p>Product မရှိသေးပါ</p>';
+      }
+    }
+
+    async function st(id, s) {
+      const { error } = await SB.from('orders').update({ status: s }).eq('id', id);
+      if (error) alert('Status ပြောင်းမရပါ: ' + error.message);
+      else show('orders');
+    }
+
+    async function setLink(id, url) {
+      if (url) {
+        await SB.from('product_files').upsert({ product_id: id, url: url.trim() });
+      }
+    }
+
+    async function addP() {
+      const name = $('pn').value.trim();
+      const price = +$('pp').value;
+      if (!name || isNaN(price)) return alert('Product အမည်နှင့် ဈေးနှုန်း ဖြည့်ပါ');
+      const { data, error } = await SB.from('products').insert({
+        name,
+        price,
+        category: $('pc').value.trim() || 'General',
+        image: $('pi').value.trim(),
+        description: $('pd').value.trim()
+      }).select().single();
+      if (error) return alert(error.message);
+      await setLink(data.id, $('pf').value.trim());
+      alert('Product အောင်မြင်စွာ ထည့်သွင်းပြီးပါပြီ!');
+      show('products');
+    }
+
+    async function lk(id) {
+      const { data } = await SB.from('product_files').select('url').eq('product_id', id).maybeSingle();
+      const current = data ? data.url : '';
+      const u = prompt('Download link သို့မဟုတ် Account Info အသစ် ထည့်ပါ:', current);
+      if (u !== null) {
+        await setLink(id, u.trim());
+        alert('Download link သိမ်းပြီးပါပြီ');
+      }
+    }
+
+    async function tg(id, a) {
+      await SB.from('products').update({ active: a }).eq('id', id);
+      show('products');
+    }
+
+    async function dl(id) {
+      if (confirm('ဤ Product ကို ဖျက်ရန် သေချာပါသလား?')) {
+        await SB.from('products').delete().eq('id', id);
+        show('products');
+      }
+    }
+  </script>
+</body>
+</html>
