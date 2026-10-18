@@ -1,4 +1,4 @@
-import { Product, PaymentAccounts } from '../types';
+import { Product, PaymentAccounts, ProductReview } from '../types';
 
 export const INITIAL_PRODUCTS: Product[] = [
   {
@@ -109,3 +109,98 @@ export const DEFAULT_PAYMENT_ACCOUNTS: PaymentAccounts = {
     number: '09-777123456'
   }
 };
+
+export const INITIAL_REVIEWS: ProductReview[] = [
+  {
+    id: 'rev-001',
+    productId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    productName: 'NordVPN Premium (1 Year Private)',
+    rating: 5,
+    customerName: 'Ko Kyaw Zin (ကိုကျော်ဇင်)',
+    comment: 'မြန်နှုန်းအရမ်းကောင်းပါတယ်! PC ရော ဖုန်းရော အဆင်ပြေပြေ ချိတ်ရပါတယ်။ ပို့ပေးတဲ့ download guide အတိုင်းလုပ်တာ ချက်ချင်းသုံးလို့ရသွားတယ်။ စိတ်ချရတဲ့ service ပါ။',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    verifiedPurchase: true,
+    orderNo: 'LH-100234',
+    helpfulCount: 6
+  },
+  {
+    id: 'rev-002',
+    productId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+    productName: 'NordVPN Premium (1 Year Private)',
+    rating: 5,
+    customerName: 'Aung Myo Htet',
+    comment: 'Ping နည်းပြီး Game ကစားရတာ လိုင်းငြိမ်တယ်။ Server အများကြီးချိတ်ရလို့ အရမ်းတန်ပါတယ်။',
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    verifiedPurchase: true,
+    helpfulCount: 4
+  },
+  {
+    id: 'rev-003',
+    productId: 'b1ffcd88-8d1a-4fe9-aa5c-5aa8ac270b22',
+    productName: 'Canva Pro Lifetime (Own Gmail)',
+    rating: 5,
+    customerName: 'Ma Su Myat (မစုမြတ်)',
+    comment: 'ကိုယ်ပိုင် Gmail ထဲကို ချက်ချင်း Brand Kit Invite ရောက်လာတယ်။ Template တွေအစုံသုံးလို့ရပါပြီ။ ကျေးဇူးအများကြီးတင်ပါတယ် Admin ရှင့်။',
+    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    verifiedPurchase: true,
+    orderNo: 'LH-100248',
+    helpfulCount: 9
+  },
+  {
+    id: 'rev-004',
+    productId: 'b1ffcd88-8d1a-4fe9-aa5c-5aa8ac270b22',
+    productName: 'Canva Pro Lifetime (Own Gmail)',
+    rating: 5,
+    customerName: 'Thura Aung (သူရအောင်)',
+    comment: 'AI Magic Studio ရော Magic Eraser ရော အကုန်သုံးရတယ်။ ဒီဈေးနဲ့ တကယ်တန်ပါတယ်! နောက်လည်း ထပ်အားပေးပါဦးမယ်။',
+    createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+    verifiedPurchase: true,
+    helpfulCount: 3
+  },
+  {
+    id: 'rev-005',
+    productId: 'c2eedc77-7c2b-4ed8-bb4b-4bb7ab160c33',
+    productName: 'Windows 11 Pro Genuine Retail Key',
+    rating: 5,
+    customerName: 'U Zaw Win',
+    comment: 'Microsoft official activation settings ထဲမှာ Key ရိုက်ထည့်လိုက်တာနဲ့ ချက်ချင်း Activated ဖြစ်သွားပါတယ်။ Genuine Retail Key စစ်စစ်ပါ။',
+    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    verifiedPurchase: true,
+    orderNo: 'LH-100219',
+    helpfulCount: 7
+  },
+  {
+    id: 'rev-006',
+    productId: 'd3ddcb66-6b3c-4dc7-cc3a-3aa6ba050d44',
+    productName: 'Telegram Premium 3 Months Gift',
+    rating: 5,
+    customerName: 'Wai Yan',
+    comment: 'Gift link ကလစ်လိုက်တာနဲ့ Star badge ချက်ချင်းရသွားတယ်။ Fast download လည်း တကယ်ရပါတယ် bro။ စိတ်ချလက်ချဝယ်လို့ရတယ်။',
+    createdAt: new Date(Date.now() - 86400000 * 6).toISOString(),
+    verifiedPurchase: true,
+    helpfulCount: 5
+  },
+  {
+    id: 'rev-007',
+    productId: 'e4ccba55-5a4d-4cb6-dd29-2995a9f40e55',
+    productName: 'ChatGPT Plus Shared Account (1 Month)',
+    rating: 5,
+    customerName: 'Htet Aung',
+    comment: 'GPT-4o နဲ့ DALL-E 3 သုံးလို့ကောင်းတယ်၊ Prompt run တာ အရမ်းမြန်တယ်။ Portal login ကလည်း ရှင်းပါတယ်။',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    verifiedPurchase: true,
+    helpfulCount: 8
+  },
+  {
+    id: 'rev-008',
+    productId: 'f5bba944-495e-4ba5-ee18-188498e30f66',
+    productName: 'CapCut Pro 1 Year (PC & Mobile)',
+    rating: 5,
+    customerName: 'Zin Phyo',
+    comment: 'Auto Captions မြန်မာစာနဲ့ရော အင်္ဂလိပ်စာရော export ထုတ်ရတာ အဆင်ပြေတယ်။ Watermark မပါတော့ ဗီဒီယို edit လုပ်တဲ့သူတွေအတွက် မရှိမဖြစ်ပါပဲ။',
+    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    verifiedPurchase: true,
+    helpfulCount: 11
+  }
+];
+

@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
-import { Plus, Check, Zap, Flame, AlertCircle } from 'lucide-react';
+import { Plus, Check, Zap, Flame, AlertCircle, Bell, Star, MessageSquare } from 'lucide-react';
+import { storeService } from '../services/storeService';
 
 interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
   onBuyNow: (product: Product) => void;
+  onOpenPriceAlert?: (product: Product) => void;
+  onOpenDetail?: (product: Product, initialTab?: 'details' | 'reviews') => void;
   isAdded?: boolean;
 }
 
@@ -13,14 +16,36 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   product,
   onAddToCart,
   onBuyNow,
+  onOpenPriceAlert,
+  onOpenDetail,
   isAdded = false,
 }) => {
   const stock = product.stock;
   const isLowStock = stock !== undefined && stock < 5 && stock > 0;
   const isOutOfStock = stock !== undefined && stock <= 0;
 
+  const [ratingSummary, setRatingSummary] = useState<{ average: number; count: number }>({
+    average: 5.0,
+    count: 0
+  });
+
+  useEffect(() => {
+    storeService.getProductRatingSummary(product.id).then(res => {
+      setRatingSummary({ average: res.average, count: res.count });
+    });
+  }, [product.id]);
+
+  const handleCardClick = () => {
+    if (onOpenDetail) {
+      onOpenDetail(product, 'details');
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl border border-[#e6d8c8] hover:border-[#6b4226] overflow-hidden flex flex-col shadow-xs hover:shadow-md transition-all duration-200 group relative">
+    <div 
+      onClick={handleCardClick}
+      className="bg-white rounded-2xl border border-[#e6d8c8] hover:border-[#6b4226] overflow-hidden flex flex-col shadow-xs hover:shadow-md transition-all duration-200 group relative cursor-pointer"
+    >
       {/* Product Image */}
       <div className="relative h-44 w-full bg-[#f7f0e8] overflow-hidden">
         <img
@@ -56,6 +81,22 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
         )}
 
+        {/* Price Alert Quick Pill on Image */}
+        {onOpenPriceAlert && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenPriceAlert(product);
+            }}
+            className="absolute bottom-2.5 right-2.5 flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-white/90 hover:bg-[#6b4226] text-[#6b4226] hover:text-white backdrop-blur-xs shadow-xs transition-colors group/alert"
+            title="ဈေးနှုန်းကျပါက Telegram သို့ အကြောင်းကြားပေးရန်"
+          >
+            <Bell className="w-2.5 h-2.5 text-amber-600 group-hover/alert:text-white" />
+            <span>Price Alert</span>
+          </button>
+        )}
+
         {/* Out of stock overlay */}
         {isOutOfStock && (
           <div className="absolute inset-0 bg-stone-900/60 backdrop-blur-2xs flex items-center justify-center">
@@ -70,6 +111,33 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       {/* Product Info */}
       <div className="p-4 flex-1 flex flex-col justify-between gap-3">
         <div className="space-y-1.5">
+          {/* Star Rating & Review Count */}
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onOpenDetail) onOpenDetail(product, 'reviews');
+              }}
+              className="flex items-center gap-1.5 text-xs text-stone-600 hover:text-[#6b4226] group/rate transition-colors"
+            >
+              <div className="flex items-center text-amber-500">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-500" />
+              </div>
+              <span className="font-extrabold text-[#2b1d12]">
+                {ratingSummary.average.toFixed(1)}
+              </span>
+              <span className="text-[11px] text-stone-400 group-hover/rate:text-[#6b4226]">
+                ({ratingSummary.count > 0 ? `${ratingSummary.count} reviews` : 'အသစ်'})
+              </span>
+            </button>
+
+            <span className="text-[10px] text-stone-400 font-semibold flex items-center gap-1 hover:text-[#6b4226]">
+              <MessageSquare className="w-2.5 h-2.5" />
+              သုံးသပ်ချက်ရေးမည်
+            </span>
+          </div>
+
           <h3 className="font-bold text-[#2b1d12] text-sm sm:text-base leading-snug group-hover:text-[#6b4226] transition-colors">
             {product.name}
           </h3>
@@ -94,7 +162,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+            {onOpenPriceAlert && (
+              <button
+                type="button"
+                onClick={() => onOpenPriceAlert(product)}
+                className="p-2 rounded-lg text-xs font-semibold bg-[#fcfaf7] hover:bg-[#ebdccd] text-[#6b4226] border border-[#ebdccd] transition-all hover:scale-105"
+                title="ဈေးနှုန်းကျပါက Telegram သို့ အကြောင်းကြားပေးရန် (Price Alert)"
+              >
+                <Bell className="w-4 h-4 text-amber-600" />
+              </button>
+            )}
             <button
               onClick={() => onAddToCart(product)}
               disabled={isOutOfStock}

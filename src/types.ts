@@ -34,6 +34,37 @@ export interface Order {
   created_at: string;
 }
 
+export interface CustomerHistoryOrder extends Order {
+  unlockedLinks?: { name: string; url: string }[];
+}
+
+export interface PriceAlert {
+  id: string;
+  productId: string;
+  productName: string;
+  productImage?: string;
+  currentPriceAtCreation: number;
+  targetPrice?: number;
+  telegramId: string;
+  status: 'active' | 'notified' | 'cancelled';
+  createdAt: string;
+  notifiedAt?: string;
+  triggeredPrice?: number;
+}
+
+export interface ProductReview {
+  id: string;
+  productId: string;
+  productName?: string;
+  rating: number; // 1 to 5
+  customerName: string;
+  comment: string;
+  createdAt: string;
+  verifiedPurchase?: boolean;
+  orderNo?: string;
+  helpfulCount?: number;
+}
+
 export interface PaymentAccounts {
   KPay: { name: string; number: string };
   WavePay: { name: string; number: string };

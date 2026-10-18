@@ -137,6 +137,7 @@ export const CartModal: React.FC<CartModalProps> = ({
       });
 
       if (res.ok) {
+        localStorage.setItem('LH_LAST_CONTACT', contact.trim());
         onClearCart();
         setCompletedOrder({ no: res.no, contact: contact.trim() });
         confetti({

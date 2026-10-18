@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Order, OrderStatus } from '../types';
-import { X, Search, CheckCircle2, Clock, AlertTriangle, Download, Copy, Check, ExternalLink } from 'lucide-react';
+import { X, Search, CheckCircle2, Clock, AlertTriangle, Download, Copy, Check, ExternalLink, History } from 'lucide-react';
 
 interface TrackOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialOrderNo?: string;
   initialContact?: string;
+  onOpenHistory?: (contact?: string) => void;
   onTrack: (no: string, contact: string) => Promise<{
     found: boolean;
     order?: Order;
@@ -19,6 +20,7 @@ export const TrackOrderModal: React.FC<TrackOrderModalProps> = ({
   onClose,
   initialOrderNo = '',
   initialContact = '',
+  onOpenHistory,
   onTrack,
 }) => {
   const [orderNo, setOrderNo] = useState(initialOrderNo);
@@ -152,6 +154,23 @@ export const TrackOrderModal: React.FC<TrackOrderModalProps> = ({
               <span>{loading ? 'စစ်ဆေးနေပါသည်...' : 'အော်ဒါစစ်မည်'}</span>
             </button>
           </form>
+
+          {/* Quick jump to purchase history */}
+          {onOpenHistory && (
+            <div className="pt-1 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenHistory(contact);
+                }}
+                className="inline-flex items-center gap-1.5 text-xs text-[#6b4226] hover:text-[#53321d] font-semibold hover:underline"
+              >
+                <History className="w-3.5 h-3.5" />
+                <span>ဖုန်းနံပါတ်ဖြင့် ဝယ်ယူမှုမှတ်တမ်းအားလုံး ကြည့်ရှုမည် 👉</span>
+              </button>
+            </div>
+          )}
 
           {/* Results Area */}
           {searched && (

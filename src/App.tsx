@@ -6,9 +6,13 @@ import { Hero } from './components/Hero';
 import { ProductCard } from './components/ProductCard';
 import { CartModal } from './components/CartModal';
 import { TrackOrderModal } from './components/TrackOrderModal';
+import { CustomerOrderHistoryModal } from './components/CustomerOrderHistoryModal';
+import { PriceAlertModal } from './components/PriceAlertModal';
+import { ProductDetailModal } from './components/ProductDetailModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsModal } from './components/SettingsModal';
 import { ToastContainer, ToastNotification } from './components/Toast';
+import { AdminAuthGuard } from './components/AdminAuthGuard';
 import { Search, ShoppingBag, Filter, ShieldCheck, Phone, Send, Info } from 'lucide-react';
 
 export default function App() {
@@ -25,9 +29,16 @@ export default function App() {
   // Modals
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isTrackOpen, setIsTrackOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isPriceAlertOpen, setIsPriceAlertOpen] = useState(false);
+  const [priceAlertProduct, setPriceAlertProduct] = useState<Product | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [detailProduct, setDetailProduct] = useState<Product | null>(null);
+  const [detailInitialTab, setDetailInitialTab] = useState<'details' | 'reviews'>('details');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [trackInitialNo, setTrackInitialNo] = useState('');
   const [trackInitialContact, setTrackInitialContact] = useState('');
+  const [historyInitialContact, setHistoryInitialContact] = useState('');
 
   // Config & Status
   const [config, setConfig] = useState<AppConfig>(storeService.getConfig());
@@ -159,9 +170,27 @@ export default function App() {
     return res;
   };
 
-  // Order Tracking
+  // Order Tracking & Purchase History
   const handleTrackOrder = async (no: string, contact: string) => {
     return await storeService.trackOrder(no, contact);
+  };
+
+  const handleOpenHistory = (contact?: string) => {
+    if (contact) {
+      setHistoryInitialContact(contact);
+    }
+    setIsHistoryOpen(true);
+  };
+
+  const handleOpenPriceAlert = (product: Product) => {
+    setPriceAlertProduct(product);
+    setIsPriceAlertOpen(true);
+  };
+
+  const handleOpenProductDetail = (product: Product, initialTab: 'details' | 'reviews' = 'details') => {
+    setDetailProduct(product);
+    setDetailInitialTab(initialTab);
+    setIsDetailOpen(true);
   };
 
   // Admin Actions
@@ -188,8 +217,9 @@ export default function App() {
     updates: Partial<Product>,
     downloadLink?: string
   ) => {
-    await storeService.updateProduct(productId, updates, downloadLink);
+    const res = await storeService.updateProduct(productId, updates, downloadLink);
     await loadData();
+    return res;
   };
 
   const handleDeleteProduct = async (productId: string) => {
@@ -233,6 +263,7 @@ export default function App() {
           setTrackInitialContact('');
           setIsTrackOpen(true);
         }}
+        onOpenHistory={() => handleOpenHistory()}
         onOpenAdmin={() => setIsAdminView(true)}
         isAdminView={isAdminView}
         onToggleAdminView={() => setIsAdminView(prev => !prev)}
@@ -242,25 +273,36 @@ export default function App() {
 
       {/* Main Body */}
       {isAdminView ? (
-        /* ADMIN DASHBOARD VIEW */
+        /* ADMIN DASHBOARD VIEW PROTECTED BY FIREBASE */
         <main className="flex-1">
-          <AdminDashboard
-            products={products}
-            orders={orders}
-            onUpdateOrderStatus={handleUpdateOrderStatus}
-            onDeleteOrder={handleDeleteOrder}
-            onAddProduct={handleAddProduct}
-            onUpdateProduct={handleUpdateProduct}
-            onDeleteProduct={handleDeleteProduct}
-            onRefreshData={loadData}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            isSupabaseLive={isSupabaseLive}
-          />
+          <AdminAuthGuard onBackToStore={() => setIsAdminView(false)}>
+            {(_adminUser, _onLogout) => (
+              <AdminDashboard
+                products={products}
+                orders={orders}
+                onUpdateOrderStatus={handleUpdateOrderStatus}
+                onDeleteOrder={handleDeleteOrder}
+                onAddProduct={handleAddProduct}
+                onUpdateProduct={handleUpdateProduct}
+                onDeleteProduct={handleDeleteProduct}
+                onRefreshData={loadData}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                isSupabaseLive={isSupabaseLive}
+              />
+            )}
+          </AdminAuthGuard>
         </main>
       ) : (
         /* CUSTOMER STOREFRONT VIEW */
         <main className="flex-1">
-          <Hero />
+          <Hero 
+            onOpenTrack={() => {
+              setTrackInitialNo('');
+              setTrackInitialContact('');
+              setIsTrackOpen(true);
+            }}
+            onOpenHistory={() => handleOpenHistory()}
+          />
 
           {/* Search & Category Filter Section */}
           <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -341,6 +383,8 @@ export default function App() {
                     product={product}
                     onAddToCart={handleAddToCart}
                     onBuyNow={handleBuyNow}
+                    onOpenPriceAlert={handleOpenPriceAlert}
+                    onOpenDetail={handleOpenProductDetail}
                     isAdded={lastAddedId === product.id}
                   />
                 ))}
@@ -452,10 +496,49 @@ export default function App() {
         onClose={() => setIsTrackOpen(false)}
         initialOrderNo={trackInitialNo}
         initialContact={trackInitialContact}
+        onOpenHistory={(contact) => {
+          setIsTrackOpen(false);
+          handleOpenHistory(contact);
+        }}
         onTrack={handleTrackOrder}
       />
 
-      {/* 3. Settings Modal */}
+      {/* 3. Customer Purchase History Modal */}
+      <CustomerOrderHistoryModal
+        isOpen={isHistoryOpen}
+        onClose={() => setIsHistoryOpen(false)}
+        initialContact={historyInitialContact}
+        onFetchHistory={c => storeService.getCustomerOrderHistory(c)}
+        onOpenTrackOrder={(no, contact) => {
+          setIsHistoryOpen(false);
+          setTrackInitialNo(no);
+          setTrackInitialContact(contact);
+          setIsTrackOpen(true);
+        }}
+      />
+
+      {/* 4. Product Price Alert Modal */}
+      <PriceAlertModal
+        isOpen={isPriceAlertOpen}
+        onClose={() => setIsPriceAlertOpen(false)}
+        product={priceAlertProduct}
+        onAlertCreated={() => {
+          // Alert registered
+        }}
+      />
+
+      {/* 4.5 Product Detail View & Reviews Modal */}
+      <ProductDetailModal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        product={detailProduct}
+        initialTab={detailInitialTab}
+        onAddToCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
+        onOpenPriceAlert={handleOpenPriceAlert}
+      />
+
+      {/* 5. Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}

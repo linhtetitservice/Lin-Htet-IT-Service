@@ -1,10 +1,11 @@
 import React from 'react';
-import { ShoppingCart, Search, ShieldCheck, Settings, ExternalLink } from 'lucide-react';
+import { ShoppingCart, Search, ShieldCheck, Settings, ExternalLink, History } from 'lucide-react';
 
 interface HeaderProps {
   cartCount: number;
   onOpenCart: () => void;
   onOpenTrack: () => void;
+  onOpenHistory: () => void;
   onOpenAdmin: () => void;
   onOpenSettings: () => void;
   isAdminView: boolean;
@@ -16,6 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   cartCount,
   onOpenCart,
   onOpenTrack,
+  onOpenHistory,
   isAdminView,
   onToggleAdminView,
   onOpenSettings,
@@ -72,10 +74,22 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 onClick={onOpenTrack}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-[#53321d] hover:bg-[#432715] text-[#f7f0e8] transition-colors"
+                title="အော်ဒါနံပါတ်ဖြင့် အခြေအနေ စစ်ဆေးရန်"
               >
                 <Search className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">အော်ဒါစစ်ရန်</span>
                 <span className="sm:hidden">စစ်ရန်</span>
+              </button>
+
+              {/* Purchase History Button */}
+              <button
+                onClick={onOpenHistory}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium bg-[#53321d] hover:bg-[#432715] text-[#f7f0e8] transition-colors"
+                title="ဖုန်းနံပါတ်ဖြင့် ဝယ်ယူမှုမှတ်တမ်းအားလုံး ကြည့်ရှုရန်"
+              >
+                <History className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline">ဝယ်ယူမှုမှတ်တမ်း</span>
+                <span className="lg:hidden hidden sm:inline">မှတ်တမ်း</span>
               </button>
 
               {/* Cart Button */}
