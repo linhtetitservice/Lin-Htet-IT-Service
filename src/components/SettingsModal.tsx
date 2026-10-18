@@ -30,6 +30,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [waveName, setWaveName] = useState(config.paymentAccounts?.WavePay?.name || 'Lin Htet');
   const [waveNumber, setWaveNumber] = useState(config.paymentAccounts?.WavePay?.number || '09-777123456');
 
+  const [adminPasscode, setAdminPasscode] = useState(
+    localStorage.getItem('linhtet_admin_passcode') || 'linhtet2026'
+  );
+
   const [copiedSql, setCopiedSql] = useState(false);
   const [testStatus, setTestStatus] = useState<string | null>(null);
   const [dbCheckStatus, setDbCheckStatus] = useState<string | null>(null);
@@ -44,6 +48,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       KPay: { name: kpayName.trim(), number: kpayNumber.trim() },
       WavePay: { name: waveName.trim(), number: waveNumber.trim() },
     };
+
+    if (adminPasscode.trim()) {
+      localStorage.setItem('linhtet_admin_passcode', adminPasscode.trim());
+    }
 
     onSaveConfig({
       supabaseUrl: supabaseUrl.trim(),
@@ -415,6 +423,35 @@ create policy "public read slips" on storage.objects for select using (bucket_id
                     className="w-full text-xs px-2.5 py-1.5 rounded border border-[#d9c4b3] bg-white outline-none font-mono"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Admin Security Passcode Section */}
+            <div className="space-y-3 pt-3 border-t border-[#f2e8dc]">
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-xs sm:text-sm text-[#6b4226] flex items-center gap-1.5 uppercase tracking-wide">
+                  <Key className="w-4 h-4 text-amber-600" />
+                  <span>Admin Master Security Passcode (Emergency Login)</span>
+                </h4>
+                <span className="text-[10px] text-stone-500 font-bold bg-[#f7f0e8] px-2 py-0.5 rounded-full">
+                  PIN Login
+                </span>
+              </div>
+
+              <div className="bg-[#fcfaf7] p-3.5 rounded-xl border border-[#ebdccd] space-y-2">
+                <label className="block text-xs font-semibold text-stone-700">
+                  စီမံခန့်ခွဲသူ Master Passcode (Vercel သို့မဟုတ် Custom Domain တွင် Google Auth မရပါက ချက်ချင်းဝင်ရန်)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. linhtet2026"
+                  value={adminPasscode}
+                  onChange={e => setAdminPasscode(e.target.value)}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-[#d9c4b3] bg-white outline-none font-mono font-bold text-[#6b4226]"
+                />
+                <p className="text-[11px] text-stone-500">
+                  * မူလ Passcode သည် <code className="font-bold text-[#6b4226]">linhtet2026</code> ဖြစ်ပါသည်။ မိမိစိတ်ကြိုက် အသစ် ပြောင်းလဲသတ်မှတ်နိုင်ပါသည်။
+                </p>
               </div>
             </div>
 

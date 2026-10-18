@@ -9,6 +9,8 @@ import { TrackOrderModal } from './components/TrackOrderModal';
 import { CustomerOrderHistoryModal } from './components/CustomerOrderHistoryModal';
 import { PriceAlertModal } from './components/PriceAlertModal';
 import { ProductDetailModal } from './components/ProductDetailModal';
+import { TestimonialSlider } from './components/TestimonialSlider';
+import { FAQ } from './components/FAQ';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsModal } from './components/SettingsModal';
 import { ToastContainer, ToastNotification } from './components/Toast';
@@ -392,6 +394,12 @@ export default function App() {
             )}
           </section>
 
+          {/* Customer Testimonial Slider / Carousel Section */}
+          <TestimonialSlider
+            products={products}
+            onSelectProduct={(prod, tab) => handleOpenProductDetail(prod, tab || 'details')}
+          />
+
           {/* How to Order / Guide Section */}
           <section className="bg-[#f7f0e8] border-t border-[#ebdccd] py-12 px-4 sm:px-6 lg:px-8 mt-12">
             <div className="max-w-5xl mx-auto">
@@ -437,6 +445,18 @@ export default function App() {
               </div>
             </div>
           </section>
+
+          {/* FAQ Accordion Section */}
+          <FAQ
+            onOpenTrack={() => {
+              setTrackInitialNo('');
+              setTrackInitialContact('');
+              setIsTrackOpen(true);
+            }}
+            onOpenHistory={() => handleOpenHistory()}
+            supportTelegram="https://t.me/linhtetit"
+            supportPhone={config.paymentAccounts?.KPay?.number || '09-777123456'}
+          />
         </main>
       )}
 

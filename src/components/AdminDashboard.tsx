@@ -25,7 +25,10 @@ import {
   AlertTriangle,
   Star,
   MessageSquare,
-  ThumbsUp
+  ThumbsUp,
+  Download,
+  FileSpreadsheet,
+  ChevronDown
 } from 'lucide-react';
 import { OrderTrendsChart } from './OrderTrendsChart';
 
@@ -240,6 +243,90 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return matchesStatus && matchesSearch;
   });
 
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
+  // Bookkeeping CSV Exporter with UTF-8 BOM for full Burmese and multi-lingual character support
+  const exportOrdersToCSV = (ordersToExport: Order[], exportLabel: string = 'Filtered Orders') => {
+    if (!ordersToExport || ordersToExport.length === 0) {
+      setAlertNotice('Export ပြုလုပ်ရန် အော်ဒါစာရင်း မရှိသေးပါ');
+      return;
+    }
+
+    const escapeCSV = (value: unknown) => {
+      if (value === undefined || value === null) return '""';
+      const text = String(value).replace(/"/g, '""');
+      return `"${text}"`;
+    };
+
+    // Bookkeeping CSV Headers
+    const headers = [
+      'Order No (အော်ဒါနံပါတ်)',
+      'Date Time (ရက်စွဲ/အချိန်)',
+      'Customer Name (ဝယ်သူအမည်)',
+      'Contact Info (ဖုန်း/Telegram)',
+      'Order Status (အခြေအနေ)',
+      'Payment Method (ငွေပေးချေမှု)',
+      'Total Amount MMK (ကျပ်)',
+      'Items Detail (ဝယ်ယူသည့် ပစ္စည်းများ)',
+      'Total Item Qty (ပစ္စည်းစုစုပေါင်း ခုရေ)',
+      'Customer Note (မှတ်ချက်)',
+      'Payment Slip URL (ငွေလွှဲပြေစာ)'
+    ];
+
+    const rows = ordersToExport.map(order => {
+      const itemsFormatted = (order.items || [])
+        .map(i => `${i.name} (x${i.qty || 1} @ ${(i.price || 0).toLocaleString()} Ks)`)
+        .join('; ');
+      const totalQty = (order.items || []).reduce((sum, i) => sum + (i.qty || 1), 0);
+      
+      const dateObj = new Date(order.created_at);
+      const formattedDate = !isNaN(dateObj.getTime())
+        ? dateObj.toLocaleString('en-GB', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          })
+        : order.created_at;
+
+      return [
+        escapeCSV(order.no),
+        escapeCSV(formattedDate),
+        escapeCSV(order.customer_name),
+        escapeCSV(order.contact),
+        escapeCSV(order.status.toUpperCase()),
+        escapeCSV(order.pay_method),
+        escapeCSV(order.total),
+        escapeCSV(itemsFormatted),
+        escapeCSV(totalQty),
+        escapeCSV(order.note || '-'),
+        escapeCSV(order.slip || 'No Slip')
+      ].join(',');
+    });
+
+    const csvContent = [headers.map(h => escapeCSV(h)).join(','), ...rows].join('\r\n');
+    
+    // Add UTF-8 Byte Order Mark (\uFEFF) so Excel, Google Sheets, and LibreOffice correctly render Burmese characters
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    const timestamp = new Date().toISOString().slice(0, 10);
+    const filterTag = statusFilter !== 'all' ? `_${statusFilter}` : '';
+    link.href = url;
+    link.setAttribute('download', `linhtet_orders${filterTag}_${timestamp}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setAlertNotice(`အော်ဒါစာရင်း CSV (${ordersToExport.length} စောင် - ${exportLabel}) ကို အောင်မြင်စွာ ဒေါင်းလုဒ်လုပ်ပြီးပါပြီ!`);
+    setShowExportMenu(false);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Admin Title & Bar */}
@@ -304,6 +391,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#f7f0e8] hover:bg-[#ebdccd] text-[#6b4226] border border-[#d9c4b3] transition-colors"
           >
             ⚙️ Setup & Keys
+          </button>
+
+          <button
+            onClick={() => exportOrdersToCSV(orders, `All Orders (${orders.length})`)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-colors shadow-2xs"
+            title="အော်ဒါစာရင်းအားလုံးကို Bookkeeping CSV အဖြစ် ဒေါင်းလုဒ်ဆွဲမည်"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-700" />
+            <span>Export CSV</span>
           </button>
 
           <a
@@ -410,8 +506,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* ORDERS TAB CONTENT */}
       {activeTab === 'orders' && (
         <div className="space-y-4">
-          {/* Filter and Search Bar */}
-          <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between bg-white p-3.5 rounded-xl border border-[#e6d8c8]">
+          {/* Filter and Search Bar with CSV Export */}
+          <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between bg-white p-3.5 rounded-xl border border-[#e6d8c8] shadow-2xs">
+            {/* Status Filter Pills */}
             <div className="flex items-center gap-1.5 flex-wrap">
               {['all', 'new', 'paid', 'delivered', 'cancelled'].map(st => (
                 <button
@@ -436,16 +533,160 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               ))}
             </div>
 
-            <div className="relative min-w-[220px]">
-              <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
-              <input
-                type="text"
-                placeholder="အော်ဒါနံပါတ် / ဖုန်း ရှာရန်..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full text-xs pl-9 pr-3 py-2 rounded-lg border border-[#d9c4b3] bg-[#fcfaf7] outline-none focus:border-[#6b4226]"
-              />
+            {/* Search Input & CSV Export Button Group */}
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <div className="relative flex-1 sm:min-w-[220px]">
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-stone-400" />
+                <input
+                  type="text"
+                  placeholder="အော်ဒါနံပါတ် / ဖုန်း ရှာရန်..."
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full text-xs pl-9 pr-3 py-2 rounded-lg border border-[#d9c4b3] bg-[#fcfaf7] outline-none focus:border-[#6b4226]"
+                />
+              </div>
+
+              {/* Bookkeeping CSV Export Button & Options Dropdown */}
+              <div className="relative shrink-0">
+                <div className="flex items-center">
+                  <button
+                    onClick={() =>
+                      exportOrdersToCSV(
+                        filteredOrders,
+                        statusFilter === 'all' ? `Current Search (${filteredOrders.length})` : `${statusFilter} (${filteredOrders.length})`
+                      )
+                    }
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-l-xl text-xs font-bold bg-[#6b4226] hover:bg-[#53321d] text-white shadow-2xs transition-all active:scale-95 whitespace-nowrap"
+                    title="လက်ရှိ ရွေးချယ်ထားသော အော်ဒါစာရင်းကို CSV အဖြစ် ဒေါင်းလုဒ်လုပ်မည်"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Export CSV ({filteredOrders.length})</span>
+                  </button>
+                  <button
+                    onClick={() => setShowExportMenu(prev => !prev)}
+                    className="px-2 py-2 rounded-r-xl border-l border-[#53321d] text-xs font-bold bg-[#6b4226] hover:bg-[#53321d] text-white shadow-2xs transition-all"
+                    title="Export ရွေးချယ်စရာများ"
+                    aria-label="Export menu"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Dropdown Menu */}
+                {showExportMenu && (
+                  <>
+                    <div 
+                      className="fixed inset-0 z-30" 
+                      onClick={() => setShowExportMenu(false)} 
+                    />
+                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-[#e6d8c8] py-2 z-40 animate-in fade-in zoom-in-95 text-xs space-y-1">
+                      <div className="px-3.5 py-1.5 text-[11px] font-bold text-stone-500 uppercase tracking-wider border-b border-stone-100 flex items-center justify-between">
+                        <span>Bookkeeping CSV Export</span>
+                        <FileSpreadsheet className="w-3.5 h-3.5 text-[#6b4226]" />
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          exportOrdersToCSV(
+                            filteredOrders,
+                            `လက်ရှိ Filter စာရင်း (${filteredOrders.length})`
+                          )
+                        }
+                        className="w-full text-left px-3.5 py-2 hover:bg-[#f7f0e8] text-stone-800 flex items-center justify-between transition-colors"
+                      >
+                        <span className="font-semibold">လက်ရှိ ရွေးထားသော စာရင်း</span>
+                        <span className="font-mono font-bold text-[#6b4226] bg-[#f7f0e8] px-2 py-0.5 rounded-md">
+                          {filteredOrders.length} စောင်
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          exportOrdersToCSV(orders, `အော်ဒါ အားလုံး (${orders.length})`)
+                        }
+                        className="w-full text-left px-3.5 py-2 hover:bg-[#f7f0e8] text-stone-800 flex items-center justify-between transition-colors"
+                      >
+                        <span className="font-semibold">အော်ဒါ အားလုံး (All Orders)</span>
+                        <span className="font-mono font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded-md">
+                          {orders.length} စောင်
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          exportOrdersToCSV(
+                            orders.filter(o => o.status === 'paid'),
+                            'Paid Orders Only'
+                          )
+                        }
+                        className="w-full text-left px-3.5 py-2 hover:bg-emerald-50 text-emerald-900 flex items-center justify-between transition-colors"
+                      >
+                        <span className="font-semibold">ငွေလက်ခံပြီး စာရင်း (Paid Only)</span>
+                        <span className="font-mono font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                          {orders.filter(o => o.status === 'paid').length} စောင်
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() =>
+                          exportOrdersToCSV(
+                            orders.filter(o => o.status === 'delivered'),
+                            'Delivered Orders Only'
+                          )
+                        }
+                        className="w-full text-left px-3.5 py-2 hover:bg-blue-50 text-blue-900 flex items-center justify-between transition-colors"
+                      >
+                        <span className="font-semibold">ပို့ဆောင်ပြီး (Delivered Only)</span>
+                        <span className="font-mono font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-md">
+                          {orders.filter(o => o.status === 'delivered').length} စောင်
+                        </span>
+                      </button>
+
+                      <div className="pt-1.5 px-3.5 border-t border-stone-100 text-[10px] text-stone-500">
+                        * Excel, Google Sheets, Numbers များတွင် မြန်မာစာ မှန်ကန်စွာ ပေါ်စေရန် UTF-8 BOM ဖြင့် ထုတ်ပေးပါသည်
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
+          </div>
+
+          {/* Orders Bookkeeping Summary Sub-bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-1 text-xs text-stone-600 bg-[#fcfaf7] p-2.5 rounded-xl border border-[#ebdccd]">
+            <div className="flex items-center gap-3 flex-wrap">
+              <span>
+                စာရင်းဝင် အော်ဒါ: <b className="text-stone-900">{filteredOrders.length}</b> စောင်
+                {statusFilter !== 'all' && (
+                  <span className="text-[#6b4226] font-bold"> ({statusFilter})</span>
+                )}
+              </span>
+              <span className="text-stone-300">•</span>
+              <span>
+                ရောင်းအား တန်ဖိုး: <b className="text-[#6b4226] font-extrabold">{filteredOrders.reduce((sum, o) => sum + (o.total || 0), 0).toLocaleString()} Ks</b>
+              </span>
+              {orders.filter(o => o.status === 'paid').length > 0 && (
+                <>
+                  <span className="text-stone-300">•</span>
+                  <span className="text-emerald-700 font-bold">
+                    ငွေလက်ခံရရှိပြီး: {orders.filter(o => o.status === 'paid').reduce((sum, o) => sum + (o.total || 0), 0).toLocaleString()} Ks
+                  </span>
+                </>
+              )}
+            </div>
+
+            <button
+              onClick={() =>
+                exportOrdersToCSV(
+                  filteredOrders,
+                  statusFilter === 'all' ? 'All Filtered' : `${statusFilter} Orders`
+                )
+              }
+              className="text-[#6b4226] hover:text-[#53321d] font-bold flex items-center gap-1 text-[11px] hover:underline self-end sm:self-auto"
+            >
+              <Download className="w-3 h-3 text-[#6b4226]" />
+              <span>CSV တိုက်ရိုက် သိမ်းဆည်းရန်</span>
+            </button>
           </div>
 
           {/* Orders List */}
