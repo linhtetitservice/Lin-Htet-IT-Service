@@ -96,8 +96,8 @@
   <main id="app"></main>
 
   <script>
-    const savedUrl = localStorage.getItem('LH_SUPABASE_URL') || 'YOUR_SUPABASE_URL';
-    const savedKey = localStorage.getItem('LH_SUPABASE_KEY') || 'YOUR_SUPABASE_ANON_KEY';
+    const savedUrl = localStorage.getItem('LH_SUPABASE_URL') || 'https://zowcleefrzjwhxwnqhvj.supabase.co';
+    const savedKey = localStorage.getItem('LH_SUPABASE_KEY') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpvd2NsZWVmcnpqd2h4d25xaHZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjI5NDM5NiwiZXhwIjoyMTA3ODcwMzk2fQ.aHx5fKQTFaZ1CQhd78uH2gYIl2HP9uEA8oDUK5qJwMo';
     
     let SB = null;
     if (savedUrl && !savedUrl.includes('YOUR_SUPABASE_URL')) {

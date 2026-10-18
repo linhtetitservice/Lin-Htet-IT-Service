@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Product, Order, OrderStatus, AppConfig } from './types';
 import { storeService } from './services/storeService';
 import { Header } from './components/Header';
@@ -8,6 +8,7 @@ import { CartModal } from './components/CartModal';
 import { TrackOrderModal } from './components/TrackOrderModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsModal } from './components/SettingsModal';
+import { ToastContainer, ToastNotification } from './components/Toast';
 import { Search, ShoppingBag, Filter, ShieldCheck, Phone, Send, Info } from 'lucide-react';
 
 export default function App() {
@@ -17,6 +18,9 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('အားလုံး');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isAdminView, setIsAdminView] = useState<boolean>(false);
+
+  // Toast Notifications
+  const [toasts, setToasts] = useState<ToastNotification[]>([]);
 
   // Modals
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -29,6 +33,21 @@ export default function App() {
   const [config, setConfig] = useState<AppConfig>(storeService.getConfig());
   const [isSupabaseLive, setIsSupabaseLive] = useState(storeService.isSupabaseConnected());
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+
+  // Toast Handlers
+  const addToast = useCallback((toast: ToastNotification) => {
+    setToasts(prev => [toast, ...prev.filter(t => t.id !== toast.id).slice(0, 4)]);
+  }, []);
+
+  const handleDismissToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const handleViewToastOrder = useCallback((orderNo: string, contact?: string) => {
+    setTrackInitialNo(orderNo);
+    setTrackInitialContact(contact || '');
+    setIsTrackOpen(true);
+  }, []);
 
   // Fetch initial data
   const loadData = async () => {
@@ -43,6 +62,43 @@ export default function App() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Listen for Order Status Updates (Realtime or Admin updates)
+  useEffect(() => {
+    const handleStatusUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<{ order: Order; previousStatus?: OrderStatus }>;
+      const { order, previousStatus } = customEvent.detail || {};
+      if (!order) return;
+
+      // Trigger toast when status changes to 'paid' (Processing) or 'delivered' (Completed)
+      if (order.status === 'paid' && previousStatus !== 'paid') {
+        addToast({
+          id: `toast-${order.no}-${Date.now()}`,
+          orderNo: order.no,
+          contact: order.contact,
+          status: 'processing',
+          title: `✨ အော်ဒါ #${order.no} ငွေလွှဲစစ်ပြီး (Processing)`,
+          message: `မင်္ဂလာပါ ${order.customer_name}၊ ငွေလွှဲပြေစာ အတည်ပြုပြီးဖြစ်၍ Download Link အသုံးပြုနိုင်ပါပြီ!`,
+          timestamp: Date.now(),
+        });
+      } else if (order.status === 'delivered' && previousStatus !== 'delivered') {
+        addToast({
+          id: `toast-${order.no}-${Date.now()}`,
+          orderNo: order.no,
+          contact: order.contact,
+          status: 'completed',
+          title: `✅ အော်ဒါ #${order.no} ပြီးစီးပါပြီ (Completed)`,
+          message: `မင်္ဂလာပါ ${order.customer_name}၊ လူကြီးမင်း၏ ဒစ်ဂျစ်တယ်ပစ္စည်း အောင်မြင်စွာ ပို့ဆောင်ပြီးပါပြီ!`,
+          timestamp: Date.now(),
+        });
+      }
+    };
+
+    window.addEventListener('linhtet_order_status_updated', handleStatusUpdate);
+    return () => {
+      window.removeEventListener('linhtet_order_status_updated', handleStatusUpdate);
+    };
+  }, [addToast]);
 
   // Cart operations
   const cartItemCount = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
@@ -407,6 +463,13 @@ export default function App() {
         onSaveConfig={handleSaveConfig}
         onResetData={handleResetData}
         isSupabaseLive={isSupabaseLive}
+      />
+
+      {/* Toast Notification Container */}
+      <ToastContainer
+        toasts={toasts}
+        onDismiss={handleDismissToast}
+        onViewOrder={handleViewToastOrder}
       />
     </div>
   );

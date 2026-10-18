@@ -14,8 +14,10 @@ import {
   RefreshCw,
   Search,
   Check,
-  X
+  X,
+  BarChart3
 } from 'lucide-react';
+import { OrderTrendsChart } from './OrderTrendsChart';
 
 interface AdminDashboardProps {
   products: Product[];
@@ -42,7 +44,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onOpenSettings,
   isSupabaseLive,
 }) => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'products'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'trends' | 'products'>('orders');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
@@ -53,6 +55,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [pPrice, setPPrice] = useState('');
   const [pCategory, setPCategory] = useState('General');
   const [pImage, setPImage] = useState('');
+  const [pStock, setPStock] = useState('5');
   const [pLink, setPLink] = useState('');
   const [pDesc, setPDesc] = useState('');
 
@@ -80,6 +83,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         category: pCategory.trim() || 'General',
         image: pImage.trim(),
         description: pDesc.trim(),
+        stock: parseInt(pStock) || 5,
         active: true,
       },
       pLink.trim()
@@ -90,6 +94,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setPPrice('');
     setPCategory('General');
     setPImage('');
+    setPStock('5');
     setPLink('');
     setPDesc('');
     setIsAddingProduct(false);
@@ -147,6 +152,31 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
 
           <button
+            onClick={() => {
+              const testOrder: Order = orders[0] || {
+                id: 'test-order-1',
+                no: 'LH' + Math.floor(10000000 + Math.random() * 90000000),
+                customer_name: 'စမ်းသပ်ဝယ်ယူသူ',
+                contact: '09798112233',
+                status: 'paid',
+                items: [{ id: 'p1', name: 'Canva Pro Lifetime', price: 12000, qty: 1 }],
+                total: 12000,
+                pay_method: 'KPay',
+                created_at: new Date().toISOString()
+              };
+              window.dispatchEvent(
+                new CustomEvent('linhtet_order_status_updated', {
+                  detail: { order: { ...testOrder, status: 'paid' }, previousStatus: 'new' }
+                })
+              );
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 transition-colors"
+            title="အော်ဒါ Status ပြောင်းလဲမှု Toast Notification ကို စမ်းသပ်ကြည့်ရှုရန်"
+          >
+            <span>🔔 Toast စမ်းသပ်ရန်</span>
+          </button>
+
+          <button
             onClick={onOpenSettings}
             className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#f7f0e8] hover:bg-[#ebdccd] text-[#6b4226] border border-[#d9c4b3] transition-colors"
           >
@@ -182,6 +212,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {newOrdersCount} New
             </span>
           )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab('trends')}
+          className={`flex items-center gap-2 px-5 py-3 text-sm font-bold border-b-2 transition-all ${
+            activeTab === 'trends'
+              ? 'border-[#6b4226] text-[#6b4226] bg-[#f7f0e8]/50'
+              : 'border-transparent text-stone-500 hover:text-stone-800'
+          }`}
+        >
+          <BarChart3 className="w-4 h-4" />
+          <span>အရောင်း Trends (Analytics)</span>
         </button>
 
         <button
@@ -388,6 +430,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
+      {/* TRENDS TAB CONTENT */}
+      {activeTab === 'trends' && (
+        <OrderTrendsChart orders={orders} />
+      )}
+
       {/* PRODUCTS TAB CONTENT */}
       {activeTab === 'products' && (
         <div className="space-y-5">
@@ -432,6 +479,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       {!product.active && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-stone-200 text-stone-600">
                           ဝှက်ထားသည်
+                        </span>
+                      )}
+                      {product.stock !== undefined && (
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                          product.stock < 5
+                            ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                            : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                        }`}>
+                          Stock: {product.stock} {product.stock < 5 ? '⚠️' : ''}
                         </span>
                       )}
                     </div>
@@ -553,17 +609,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 mb-1">
                     Category (အမျိုးအစား)
                   </label>
                   <input
                     type="text"
-                    placeholder="VPN, Software, AI Tools..."
+                    placeholder="VPN, Software, AI..."
                     value={pCategory}
                     onChange={e => setPCategory(e.target.value)}
                     className="w-full text-xs px-3 py-2 rounded-lg border border-[#d9c4b3] bg-[#fcfaf7] outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-stone-700 mb-1">
+                    လက်ကျန် Stock အရေအတွက် *
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="5"
+                    value={pStock}
+                    onChange={e => setPStock(e.target.value)}
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-[#d9c4b3] bg-[#fcfaf7] outline-none font-bold"
                   />
                 </div>
                 <div>

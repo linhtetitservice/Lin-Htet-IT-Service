@@ -9,6 +9,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'VPN & Proxy',
     image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80',
     active: true,
+    stock: 3,
     download_link: 'https://mega.nz/file/nordvpn-account-guide-linhtet\nUser: linhtet.nord@gmail.com\nPass: SecPass#2026'
   },
   {
@@ -19,6 +20,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'Graphic & Design',
     image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
     active: true,
+    stock: 18,
     download_link: 'https://canva.com/brand/join?invite_token=CANVA-PRO-LINHTET-TEAM-ACCESS'
   },
   {
@@ -29,6 +31,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'OS & Software',
     image: 'https://images.unsplash.com/photo-1629654297299-c8506221ca97?auto=format&fit=crop&w=600&q=80',
     active: true,
+    stock: 2,
     download_link: 'VK7JG-NPHTM-C97JM-9MPGT-3V66T (Lin Htet Retail License)'
   },
   {
@@ -39,6 +42,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'Social & Tools',
     image: 'https://images.unsplash.com/photo-1614680376593-902f749f7ffc?auto=format&fit=crop&w=600&q=80',
     active: true,
+    stock: 4,
     download_link: 'https://t.me/giftcode?link=tgprem-linhtet-gift-3mo-valid'
   },
   {
@@ -49,6 +53,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'AI Tools',
     image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=600&q=80',
     active: true,
+    stock: 2,
     download_link: 'Login Portal: https://ai-portal.linhtet.com\nUser: linhtet_gpt_user04\nPin: 8892'
   },
   {
@@ -59,6 +64,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'Video Editing',
     image: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=600&q=80',
     active: true,
+    stock: 12,
     download_link: 'https://drive.google.com/drive/folders/capcut-pro-linhtet-vip-installer'
   },
   {
@@ -69,6 +75,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'Streaming & Music',
     image: 'https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=600&q=80',
     active: true,
+    stock: 3,
     download_link: 'https://families.google.com/join/linhtet-yt-premium-invite-batch6'
   },
   {
@@ -79,6 +86,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     category: 'Streaming & Music',
     image: 'https://images.unsplash.com/photo-1611339555312-e607c8352fd7?auto=format&fit=crop&w=600&q=80',
     active: true,
+    stock: 8,
     download_link: 'https://www.spotify.com/family/join/invite/linhtet-spotify-slot9'
   }
 ];

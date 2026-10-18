@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AppConfig, PaymentAccounts } from '../types';
-import { X, Save, Copy, Check, Send, Database, RefreshCw, Key, Shield } from 'lucide-react';
+import { X, Save, Copy, Check, Send, Database, RefreshCw, Key } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -32,6 +32,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   const [copiedSql, setCopiedSql] = useState(false);
   const [testStatus, setTestStatus] = useState<string | null>(null);
+  const [dbCheckStatus, setDbCheckStatus] = useState<string | null>(null);
   const [savedNotice, setSavedNotice] = useState(false);
 
   if (!isOpen) return null;
@@ -109,6 +110,58 @@ create policy "public read slips" on storage.objects for select using (bucket_id
     navigator.clipboard.writeText(sql);
     setCopiedSql(true);
     setTimeout(() => setCopiedSql(false), 2000);
+  };
+
+  const handleAutoDetectChatId = async () => {
+    if (!telegramBotToken) {
+      setTestStatus('Bot Token မရှိပါ');
+      return;
+    }
+    setTestStatus('@linhtetitbot မှ မက်ဆေ့ခ်ျများကို စစ်ဆေးနေပါသည်...');
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${telegramBotToken}/getUpdates`);
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.result) && data.result.length > 0) {
+        const lastUpdate = data.result[data.result.length - 1];
+        const chatId = lastUpdate.message?.chat?.id || lastUpdate.channel_post?.chat?.id || lastUpdate.my_chat_member?.chat?.id;
+        if (chatId) {
+          setTelegramChatId(String(chatId));
+          setTestStatus(`✅ Chat ID တွေ့ရှိပါသည်: ${chatId}`);
+          return;
+        }
+      }
+      setTestStatus('⚠️ Chat ID မတွေ့သေးပါ။ Telegram တွင် @linhtetitbot သို့ /start ပို့ပြီးမှ ဤခလုတ်ကို ပြန်နှိပ်ပါ');
+    } catch (e: any) {
+      setTestStatus('စစ်ဆေးမရပါ: ' + e.message);
+    }
+  };
+
+  const handleCheckSupabase = async () => {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      setDbCheckStatus('URL နှင့် Key ဖြည့်ပါ');
+      return;
+    }
+    setDbCheckStatus('Database ကို စစ်ဆေးနေပါသည်...');
+    try {
+      const res = await fetch(`${supabaseUrl}/rest/v1/products?limit=1`, {
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`
+        }
+      });
+      if (res.ok) {
+        setDbCheckStatus('✅ Database ချိတ်ဆက်ပြီး Table များ အဆင်သင့်ရှိပါသည်!');
+      } else {
+        const err = await res.json();
+        if (err.code === 'PGRST205') {
+          setDbCheckStatus('⚠️ Database ချိတ်ဆက်မိသော်လည်း Table များ မရှိသေးပါ။ အောက်ပါ schema.sql ကို Supabase SQL Editor တွင် Run ပေးပါ');
+        } else {
+          setDbCheckStatus(`အမှား: ${err.message || 'Error'}`);
+        }
+      }
+    } catch (e: any) {
+      setDbCheckStatus('ဆက်သွယ်မရပါ: ' + e.message);
+    }
   };
 
   const handleTestTelegram = async () => {
@@ -198,7 +251,7 @@ create policy "public read slips" on storage.objects for select using (bucket_id
 
               <div>
                 <label className="block text-xs font-semibold text-stone-700 mb-1">
-                  Supabase Anon Key
+                  Supabase Anon Key / Service Key
                 </label>
                 <input
                   type="text"
@@ -208,6 +261,23 @@ create policy "public read slips" on storage.objects for select using (bucket_id
                   className="w-full text-xs px-3 py-2 rounded-lg border border-[#d9c4b3] bg-[#fcfaf7] outline-none font-mono"
                 />
               </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={handleCheckSupabase}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#f7f0e8] text-[#6b4226] hover:bg-[#ebdccd] border border-[#d9c4b3] flex items-center gap-1.5"
+                >
+                  <Database className="w-3.5 h-3.5" />
+                  <span>Database ချိတ်ဆက်မှု & Table စစ်ဆေးမည်</span>
+                </button>
+              </div>
+
+              {dbCheckStatus && (
+                <div className={`p-2.5 rounded-lg text-xs ${dbCheckStatus.includes('✅') ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-amber-50 text-amber-900 border border-amber-200'}`}>
+                  {dbCheckStatus}
+                </div>
+              )}
 
               <div className="p-3 bg-[#f7f0e8] rounded-xl border border-[#ebdccd] flex items-center justify-between">
                 <div>
@@ -236,15 +306,17 @@ create policy "public read slips" on storage.objects for select using (bucket_id
 
             {/* Telegram Bot Section */}
             <div className="space-y-3 pt-3 border-t border-[#f2e8dc]">
-              <h4 className="font-bold text-xs sm:text-sm text-[#6b4226] flex items-center gap-1.5 uppercase tracking-wide">
-                <Send className="w-4 h-4" />
-                <span>Telegram Bot အော်ဒါအကြောင်းကြားမှု (Notification)</span>
-              </h4>
+              <div className="flex items-center justify-between">
+                <h4 className="font-bold text-xs sm:text-sm text-[#6b4226] flex items-center gap-1.5 uppercase tracking-wide">
+                  <Send className="w-4 h-4" />
+                  <span>Telegram Bot (@linhtetitbot) အကြောင်းကြားမှု</span>
+                </h4>
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Bot Token (@BotFather မှရသော token)
+                    Bot Token
                   </label>
                   <input
                     type="text"
@@ -256,15 +328,25 @@ create policy "public read slips" on storage.objects for select using (bucket_id
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 mb-1">
-                    Chat ID (@userinfobot မှရသော ID)
+                    Chat ID (@userinfobot သို့ Auto-Detect)
                   </label>
-                  <input
-                    type="text"
-                    placeholder="987654321 သို့ -100..."
-                    value={telegramChatId}
-                    onChange={e => setTelegramChatId(e.target.value)}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-[#d9c4b3] bg-[#fcfaf7] outline-none font-mono"
-                  />
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      placeholder="987654321..."
+                      value={telegramChatId}
+                      onChange={e => setTelegramChatId(e.target.value)}
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-[#d9c4b3] bg-[#fcfaf7] outline-none font-mono"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAutoDetectChatId}
+                      className="whitespace-nowrap px-2.5 py-1.5 rounded-lg text-xs font-bold bg-[#6b4226] text-white hover:bg-[#53321d] shrink-0"
+                      title="Telegram တွင် @linhtetitbot သို့ /start ပို့ပြီး ဤခလုတ်ကို နှိပ်ပါ"
+                    >
+                      Auto-Detect
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -277,10 +359,17 @@ create policy "public read slips" on storage.objects for select using (bucket_id
                   <Send className="w-3.5 h-3.5" />
                   <span>စမ်းသပ်မက်ဆေ့ခ်ျ ပို့ကြည့်မည်</span>
                 </button>
-                {testStatus && (
-                  <span className="text-xs font-medium text-stone-700">{testStatus}</span>
-                )}
               </div>
+
+              <div className="p-2.5 rounded-lg bg-[#fcfaf7] border border-[#ebdccd] text-[11px] text-[#735c49]">
+                💡 <b>Chat ID အလွယ်ယူနည်း:</b> Telegram တွင် <b>@linhtetitbot</b> ထဲသို့ဝင်၍ <b>/start</b> ဟု စာပို့ပါ။ ထို့နောက် အထက်ပါ <b>"Auto-Detect"</b> ခလုတ်ကို နှိပ်လိုက်ပါက သင်၏ Chat ID အလိုအလျောက် ရရှိပါမည်။
+              </div>
+
+              {testStatus && (
+                <div className="p-2 rounded text-xs font-medium bg-stone-100 text-stone-800 border border-stone-200">
+                  {testStatus}
+                </div>
+              )}
             </div>
 
             {/* Payment Numbers Section */}

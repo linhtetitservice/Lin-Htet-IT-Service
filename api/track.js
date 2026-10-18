@@ -1,4 +1,5 @@
-const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_KEY;
+const U = process.env.SUPABASE_URL || 'https://zowcleefrzjwhxwnqhvj.supabase.co';
+const K = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpvd2NsZWVmcnpqd2h4d25xaHZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjI5NDM5NiwiZXhwIjoyMTA3ODcwMzk2fQ.aHx5fKQTFaZ1CQhd78uH2gYIl2HP9uEA8oDUK5qJwMo';
 
 export default async function handler(req, res) {
   const { no, contact } = req.query || {};

@@ -28,15 +28,19 @@ export class StoreService {
   }
 
   private loadConfig(): AppConfig {
+    const defaultUrl = 'https://zowcleefrzjwhxwnqhvj.supabase.co';
+    const defaultKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpvd2NsZWVmcnpqd2h4d25xaHZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjI5NDM5NiwiZXhwIjoyMTA3ODcwMzk2fQ.aHx5fKQTFaZ1CQhd78uH2gYIl2HP9uEA8oDUK5qJwMo';
+    const defaultBot = '8963114762:AAF_8y-LM5Ww1JZYGMdMiOyuQsufXYyDeHw';
+
     const raw = localStorage.getItem(CONFIG_KEY);
     if (raw) {
       try {
         const parsed = JSON.parse(raw);
         return {
-          supabaseUrl: parsed.supabaseUrl || localStorage.getItem('LH_SUPABASE_URL') || '',
-          supabaseAnonKey: parsed.supabaseAnonKey || localStorage.getItem('LH_SUPABASE_KEY') || '',
-          supabaseServiceKey: parsed.supabaseServiceKey || '',
-          telegramBotToken: parsed.telegramBotToken || '',
+          supabaseUrl: parsed.supabaseUrl || localStorage.getItem('LH_SUPABASE_URL') || defaultUrl,
+          supabaseAnonKey: parsed.supabaseAnonKey || localStorage.getItem('LH_SUPABASE_KEY') || defaultKey,
+          supabaseServiceKey: parsed.supabaseServiceKey || defaultKey,
+          telegramBotToken: parsed.telegramBotToken || defaultBot,
           telegramChatId: parsed.telegramChatId || '',
           paymentAccounts: parsed.paymentAccounts || DEFAULT_PAYMENT_ACCOUNTS
         };
@@ -45,10 +49,10 @@ export class StoreService {
       }
     }
     return {
-      supabaseUrl: localStorage.getItem('LH_SUPABASE_URL') || '',
-      supabaseAnonKey: localStorage.getItem('LH_SUPABASE_KEY') || '',
-      supabaseServiceKey: '',
-      telegramBotToken: '',
+      supabaseUrl: localStorage.getItem('LH_SUPABASE_URL') || defaultUrl,
+      supabaseAnonKey: localStorage.getItem('LH_SUPABASE_KEY') || defaultKey,
+      supabaseServiceKey: defaultKey,
+      telegramBotToken: defaultBot,
       telegramChatId: '',
       paymentAccounts: DEFAULT_PAYMENT_ACCOUNTS
     };
@@ -59,6 +63,20 @@ export class StoreService {
     if (supabaseUrl && supabaseAnonKey && !supabaseUrl.includes('YOUR_SUPABASE_URL')) {
       try {
         this.supabase = createClient(supabaseUrl, supabaseAnonKey);
+        
+        // Listen to realtime updates on orders table
+        this.supabase
+          .channel('storefront_orders_realtime')
+          .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders' }, (payload) => {
+            const updated = payload.new as Order;
+            const old = payload.old as any;
+            window.dispatchEvent(
+              new CustomEvent('linhtet_order_status_updated', {
+                detail: { order: updated, previousStatus: old?.status }
+              })
+            );
+          })
+          .subscribe();
       } catch (e) {
         console.warn('Could not initialize Supabase client:', e);
         this.supabase = null;
@@ -132,7 +150,10 @@ export class StoreService {
           .select('*')
           .order('created_at', { ascending: false });
         if (!error && data) {
-          return data;
+          return data.map((p: any, idx: number) => ({
+            ...p,
+            stock: p.stock !== undefined ? p.stock : (INITIAL_PRODUCTS[idx % INITIAL_PRODUCTS.length]?.stock ?? 3)
+          }));
         }
       } catch (err) {
         console.warn('Supabase fetch failed, falling back to local:', err);
@@ -277,18 +298,29 @@ export class StoreService {
   }
 
   public async updateOrderStatus(id: string, status: OrderStatus): Promise<void> {
+    const orders = await this.getOrders();
+    const existingOrder = orders.find(o => o.id === id);
+    const previousStatus = existingOrder?.status;
+
     if (this.supabase) {
       try {
         await this.supabase.from('orders').update({ status }).eq('id', id);
-        return;
       } catch (e) {
         console.warn('Supabase updateOrderStatus failed:', e);
       }
     }
 
-    const orders = await this.getOrders();
     const updated = orders.map(o => (o.id === id ? { ...o, status } : o));
     localStorage.setItem(ORDERS_KEY, JSON.stringify(updated));
+
+    if (existingOrder) {
+      const updatedOrder = { ...existingOrder, status };
+      window.dispatchEvent(
+        new CustomEvent('linhtet_order_status_updated', {
+          detail: { order: updatedOrder, previousStatus }
+        })
+      );
+    }
   }
 
   public async deleteOrder(id: string): Promise<void> {

@@ -8,6 +8,7 @@ export interface Product {
   active: boolean;
   download_link?: string;
   created_at?: string;
+  stock?: number;
 }
 
 export interface OrderItem {

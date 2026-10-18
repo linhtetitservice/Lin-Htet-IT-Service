@@ -1,5 +1,7 @@
-const U = process.env.SUPABASE_URL, K = process.env.SUPABASE_SERVICE_KEY;
-const BOT = process.env.BOT_TOKEN, CHAT = process.env.CHAT_ID;
+const U = process.env.SUPABASE_URL || 'https://zowcleefrzjwhxwnqhvj.supabase.co';
+const K = process.env.SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpvd2NsZWVmcnpqd2h4d25xaHZqIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MjI5NDM5NiwiZXhwIjoyMTA3ODcwMzk2fQ.aHx5fKQTFaZ1CQhd78uH2gYIl2HP9uEA8oDUK5qJwMo';
+const BOT = process.env.BOT_TOKEN || '8963114762:AAF_8y-LM5Ww1JZYGMdMiOyuQsufXYyDeHw';
+const CHAT = process.env.CHAT_ID;
 const UUID = /^[0-9a-f-]{36}$/i;
 
 export default async function handler(req, res) {
